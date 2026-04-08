@@ -67,29 +67,29 @@ export function OKRs() {
   ]
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-5">
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-1"
             style={{ color: 'rgba(255,255,255,0.3)' }}>
             Objetivos & Financeiro · 2024
           </p>
-          <h1 className="text-2xl font-black tracking-tight text-white">OKRs & Financeiro</h1>
+          <h1 className="text-xl md:text-2xl font-black tracking-tight text-white">OKRs & Financeiro</h1>
         </div>
         <button onClick={openNew}
-          className="flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
-          style={{ background: RED, boxShadow: `0 4px 18px ${RED}40` }}>
+          className="flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+          style={{ background: RED, boxShadow: `0 4px 18px ${RED}40`, minHeight: '44px' }}>
           <Plus className="h-3.5 w-3.5" /> Novo OKR
         </button>
       </div>
 
       {/* Financial cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {financialCards.map(c => (
-          <div key={c.label} className="rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
-            <div className="flex items-center justify-between mb-4">
+          <div key={c.label} className="rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
+            <div className="flex items-center justify-between mb-3 md:mb-4">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em]"
                   style={{ color: 'rgba(255,255,255,0.3)' }}>{c.label}</p>
@@ -100,7 +100,7 @@ export function OKRs() {
                 <c.icon className="h-4 w-4" style={{ color: c.color }} />
               </div>
             </div>
-            <p className="text-[26px] font-black leading-none tracking-tight text-white mb-2">{c.value}</p>
+            <p className="text-[20px] md:text-[26px] font-black leading-none tracking-tight text-white mb-2">{c.value}</p>
             <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
               <span style={{ color: c.pos ? GREEN : RED, fontWeight: 700 }}>{c.delta}</span>
               {' '}vs mês anterior
@@ -110,13 +110,13 @@ export function OKRs() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
           <p className="text-[13px] font-bold text-white/80 mb-1">Evolução Mensal</p>
           <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
             Faturamento, despesas e lucro ao longo do ano
           </p>
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={monthlyRevenue} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
               <defs>
                 {([[  'gR', RED ], ['gG', GREEN], ['gW', '#ffffff']] as [string,string][]).map(([id, color]) => (
@@ -132,14 +132,14 @@ export function OKRs() {
                 tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }} />
-              <Area type="monotone" dataKey="faturamento" name="Faturamento" stroke={RED}   strokeWidth={2} fill="url(#gR)" dot={false} />
+              <Area type="monotone" dataKey="faturamento" name="Faturamento" stroke={RED}     strokeWidth={2} fill="url(#gR)" dot={false} />
               <Area type="monotone" dataKey="despesas"    name="Despesas"    stroke="#ffffff" strokeWidth={2} fill="url(#gW)" dot={false} />
-              <Area type="monotone" dataKey="lucro"       name="Lucro"       stroke={GREEN} strokeWidth={2} fill="url(#gG)" dot={false} />
+              <Area type="monotone" dataKey="lucro"       name="Lucro"       stroke={GREEN}   strokeWidth={2} fill="url(#gG)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
+        <div className="rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
           <p className="text-[13px] font-bold text-white/80 mb-1">Resumo Anual</p>
           <p className="text-[11px] mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>Acumulado 2024</p>
           <div className="space-y-5">
@@ -187,22 +187,22 @@ export function OKRs() {
             <p className="text-[13px] font-semibold mb-1 text-white/50">Nenhum OKR cadastrado</p>
             <p className="text-[11px] mb-5 text-white/25">Crie seu primeiro objetivo para rastrear o progresso</p>
             <button onClick={openNew}
-              className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-bold text-white"
-              style={{ background: RED }}>
+              className="flex items-center gap-1.5 rounded-full px-4 py-2.5 text-[12px] font-bold text-white"
+              style={{ background: RED, minHeight: '44px' }}>
               <Plus className="h-3.5 w-3.5" /> Criar primeiro OKR
             </button>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {okrs.map(okr => {
             const pc = progressColor(okr.progress)
             return (
-              <div key={okr.id} className="rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
+              <div key={okr.id} className="rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1">
                     <p className="text-[14px] font-bold leading-snug text-white/85">{okr.objective}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       <div className="flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold"
                         style={{ background: `${RED}25`, color: RED }}>
                         {okr.owner.split(' ').map(n => n[0]).join('')}
@@ -220,12 +220,12 @@ export function OKRs() {
                       {okr.progress}%
                     </span>
                     <button onClick={() => openEdit(okr)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.06]"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.06]"
                       style={{ color: 'rgba(255,255,255,0.35)' }}>
                       <Pencil className="h-3 w-3" />
                     </button>
                     <button onClick={() => setDeleteTarget(okr)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                       style={{ color: 'rgba(255,255,255,0.35)' }}
                       onMouseEnter={e => { e.currentTarget.style.background = `${RED}20`; e.currentTarget.style.color = RED }}
                       onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}>

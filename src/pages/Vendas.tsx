@@ -82,42 +82,42 @@ export function Vendas() {
     )
   }
 
-  const mrrSpark      = monthlyRevenue.map(d => ({ v: d.faturamento }))
-  const arrSpark      = monthlyRevenue.map(d => ({ v: d.faturamento * 12 }))
-  const ltvSpark      = monthlyRevenue.map((_, i) => ({ v: 62000 + i * 550 }))
-  const churnSpark    = churnTrend.map(d => ({ v: d.churn }))
+  const mrrSpark        = monthlyRevenue.map(d => ({ v: d.faturamento }))
+  const arrSpark        = monthlyRevenue.map(d => ({ v: d.faturamento * 12 }))
+  const ltvSpark        = monthlyRevenue.map((_, i) => ({ v: 62000 + i * 550 }))
+  const churnSpark      = churnTrend.map(d => ({ v: d.churn }))
   const newClientsSpark = churnTrend.map(d => ({ v: d.newClients }))
-  const cacSpark      = monthlyRevenue.map((_, i) => ({ v: 3200 - i * 85 }))
-  const ratio         = m.ltv / m.cac
-  const ytd           = monthlyRevenue.reduce((s, d) => s + d.faturamento, 0)
+  const cacSpark        = monthlyRevenue.map((_, i) => ({ v: 3200 - i * 85 }))
+  const ratio           = m.ltv / m.cac
+  const ytd             = monthlyRevenue.reduce((s, d) => s + d.faturamento, 0)
 
   const topCards = [
-    { label: 'Receita Recorrente', sublabel: 'MRR · Mensal',     value: formatCurrency(m.mrr),  change: m.revenueGrowthMoM, spark: mrrSpark, color: RED,   icon: DollarSign },
-    { label: 'Receita Anual',      sublabel: 'ARR · Projetado',  value: formatCurrency(m.arr),  change: 4.1,                spark: arrSpark, color: GREEN,  icon: TrendingUp  },
-    { label: 'LTV Médio',          sublabel: 'Por cliente',      value: formatCurrency(m.ltv),  change: 6.2,                spark: ltvSpark, color: WHITE,  icon: ShoppingCart },
+    { label: 'Receita Recorrente', sublabel: 'MRR · Mensal',    value: formatCurrency(m.mrr),  change: m.revenueGrowthMoM, spark: mrrSpark, color: RED,   icon: DollarSign  },
+    { label: 'Receita Anual',      sublabel: 'ARR · Projetado', value: formatCurrency(m.arr),  change: 4.1,                spark: arrSpark, color: GREEN,  icon: TrendingUp  },
+    { label: 'LTV Médio',          sublabel: 'Por cliente',     value: formatCurrency(m.ltv),  change: 6.2,                spark: ltvSpark, color: WHITE,  icon: ShoppingCart },
   ]
 
   const bottomStats = [
-    { label: 'Momentum',     sublabel: 'Crescimento MoM', value: `+${m.revenueGrowthMoM}%`, change: m.revenueGrowthMoM, spark: newClientsSpark, color: GREEN,  isPos: true  },
-    { label: 'CAC',          sublabel: 'Custo aquisição', value: formatCurrency(m.cac),       change: -12.5,             spark: cacSpark,        color: GREEN,  isPos: false },
-    { label: 'Churn Rate',   sublabel: 'Cancelamentos',  value: formatPercent(m.churnRate),   change: -0.3,             spark: churnSpark,      color: RED,    isPos: false },
-    { label: 'Ratio LTV:CAC',sublabel: 'Eficiência',     value: `${ratio.toFixed(1)}x`,       change: 5.1,              spark: ltvSpark,        color: WHITE,  isPos: true  },
+    { label: 'Momentum',      sublabel: 'Crescimento MoM', value: `+${m.revenueGrowthMoM}%`, change: m.revenueGrowthMoM, spark: newClientsSpark, color: GREEN, isPos: true  },
+    { label: 'CAC',           sublabel: 'Custo aquisição', value: formatCurrency(m.cac),       change: -12.5,             spark: cacSpark,        color: GREEN, isPos: false },
+    { label: 'Churn Rate',    sublabel: 'Cancelamentos',   value: formatPercent(m.churnRate),  change: -0.3,              spark: churnSpark,      color: RED,   isPos: false },
+    { label: 'Ratio LTV:CAC', sublabel: 'Eficiência',      value: `${ratio.toFixed(1)}x`,      change: 5.1,              spark: ltvSpark,        color: WHITE, isPos: true  },
   ]
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-5">
 
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-1"
             style={{ color: 'rgba(255,255,255,0.3)' }}>
             Recomendados · 24h &nbsp;·&nbsp;
             <span style={{ color: RED }}>● {topCards.length} Métricas</span>
           </p>
-          <h1 className="text-2xl font-black tracking-tight text-white">Visão Geral do Negócio</h1>
+          <h1 className="text-xl md:text-2xl font-black tracking-tight text-white">Visão Geral do Negócio</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {['24H', 'Ativo', 'Receita'].map((f, i) => (
             <span key={f} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold cursor-pointer transition-colors"
               style={{
@@ -134,7 +134,7 @@ export function Vendas() {
       </div>
 
       {/* Top metric cards + promo */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {topCards.map(card => (
           <div key={card.label} className="rounded-2xl p-4 flex flex-col gap-3 transition-all duration-200 hover:scale-[1.01] cursor-pointer"
             style={{ background: CARD, border: CARD_B }}>
@@ -164,8 +164,8 @@ export function Vendas() {
           </div>
         ))}
 
-        {/* Promo card — preto com destaque vermelho */}
-        <div className="rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:opacity-95 transition-opacity"
+        {/* Promo card */}
+        <div className="rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:opacity-95 transition-opacity sm:col-span-2 lg:col-span-1"
           style={{ background: '#1a0000', border: `1px solid rgba(239,68,68,0.25)` }}>
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -185,12 +185,12 @@ export function Vendas() {
             </p>
           </div>
           <div className="space-y-2 mt-4">
-            <button className="w-full rounded-xl py-2 text-[12px] font-bold text-white transition-opacity hover:opacity-90"
-              style={{ background: RED, boxShadow: `0 4px 14px ${RED}40` }}>
+            <button className="w-full rounded-xl py-2.5 text-[12px] font-bold text-white transition-opacity hover:opacity-90"
+              style={{ background: RED, boxShadow: `0 4px 14px ${RED}40`, minHeight: '44px' }}>
               Ver Relatório Completo
             </button>
-            <button className="w-full rounded-xl py-2 text-[12px] font-semibold transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <button className="w-full rounded-xl py-2.5 text-[12px] font-semibold transition-colors"
+              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', minHeight: '44px' }}>
               Exportar Dados
             </button>
           </div>
@@ -198,11 +198,11 @@ export function Vendas() {
       </div>
 
       {/* Featured section */}
-      <div className="rounded-2xl p-6" style={{ background: CARD, border: CARD_B }}>
-        <div className="grid grid-cols-3 gap-8">
+      <div className="rounded-2xl p-4 md:p-6" style={{ background: CARD, border: CARD_B }}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
           {/* Left: big number */}
-          <div className="col-span-2">
+          <div className="lg:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <span className="flex h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: GREEN }} />
               <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -212,30 +212,35 @@ export function Vendas() {
             <p className="text-[13px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
               Faturamento Total Acumulado (2024)
             </p>
-            <p className="text-[52px] font-black tracking-tighter text-white leading-none mb-4">
+            <p className="text-[36px] md:text-[52px] font-black tracking-tighter text-white leading-none mb-4">
               {formatCurrency(ytd)}
             </p>
-            <div className="flex items-center gap-3 mb-6">
-              <button className="rounded-full px-4 py-1.5 text-[12px] font-bold text-white transition-opacity hover:opacity-90"
-                style={{ background: RED, boxShadow: `0 4px 14px ${RED}40` }}>
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              <button className="rounded-full px-4 py-2 text-[12px] font-bold text-white transition-opacity hover:opacity-90"
+                style={{ background: RED, boxShadow: `0 4px 14px ${RED}40`, minHeight: '44px' }}>
                 Ver Detalhes
               </button>
-              <button className="rounded-full px-4 py-1.5 text-[12px] font-semibold transition-colors"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)' }}>
+              <button className="rounded-full px-4 py-2 text-[12px] font-semibold transition-colors"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)', minHeight: '44px' }}>
                 Exportar
               </button>
-              <button className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-semibold transition-colors"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)' }}>
+              <button className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-semibold transition-colors"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)', minHeight: '44px' }}>
                 <ExternalLink className="h-3 w-3" /> Compartilhar
               </button>
             </div>
 
             {/* Bottom stats row */}
-            <div className="grid grid-cols-4 gap-0 rounded-xl overflow-hidden"
+            <div className="grid grid-cols-2 sm:grid-cols-4 rounded-xl overflow-hidden"
               style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
               {bottomStats.map((stat, i) => (
                 <div key={stat.label} className="p-3 flex flex-col gap-1"
-                  style={{ borderRight: i < 3 ? '1px solid rgba(255,255,255,0.07)' : undefined }}>
+                  style={{
+                    borderRight: i % 2 === 0 && i < 3 ? '1px solid rgba(255,255,255,0.07)' : undefined,
+                    borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.07)' : undefined,
+                  }}
+                  // On sm+ we remove bottom border via a different approach
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-[0.1em]"
@@ -267,8 +272,9 @@ export function Vendas() {
                   <button key={p} className="rounded-lg px-2 py-1 text-[10px] font-bold transition-colors"
                     style={{
                       background: i === 3 ? `${RED}25` : 'rgba(255,255,255,0.05)',
-                      color:      i === 3 ? RED          : 'rgba(255,255,255,0.3)',
+                      color:      i === 3 ? RED         : 'rgba(255,255,255,0.3)',
                       border:     i === 3 ? `1px solid ${RED}40` : '1px solid transparent',
+                      minHeight: '32px',
                     }}>
                     {p}
                   </button>
@@ -297,7 +303,7 @@ export function Vendas() {
               {[
                 { label: 'Clientes Totais', value: formatNumber(m.totalClients),  color: WHITE },
                 { label: 'Clientes Ativos', value: formatNumber(m.activeClients), color: GREEN },
-                { label: 'Novos (mês)',     value: m.newClientsThisMonth,          color: RED   },
+                { label: 'Novos (mês)',      value: m.newClientsThisMonth,          color: RED   },
                 { label: 'Avg. Contrato',   value: `${m.avgContractDuration}m`,    color: GRAY  },
               ].map(s => (
                 <div key={s.label} className="rounded-xl p-2.5"
@@ -313,7 +319,7 @@ export function Vendas() {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Pie */}
         <div className="rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
           <p className="text-[13px] font-bold text-white/80 mb-1">Por Segmento</p>
@@ -340,7 +346,7 @@ export function Vendas() {
         </div>
 
         {/* Funil */}
-        <div className="col-span-2 rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
+        <div className="lg:col-span-2 rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
           <p className="text-[13px] font-bold text-white/80 mb-1">Funil de Vendas</p>
           <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Conversão por etapa — mês atual</p>
           <div className="space-y-2.5">

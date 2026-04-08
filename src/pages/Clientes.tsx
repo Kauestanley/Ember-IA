@@ -97,41 +97,41 @@ export function Clientes() {
   }
 
   const summaryCards = [
-    { label: 'Total',             value: clients.length,              color: '#ffffff' },
-    { label: 'Clientes Ativos',   value: active.length,               color: GREEN     },
-    { label: 'Faturamento Mensal',value: formatCurrency(totalRevenue), color: RED       },
-    { label: 'Ticket Médio',      value: ticket ? formatCurrency(ticket) : '—', color: '#9ca3af' },
+    { label: 'Total',              value: clients.length,              color: '#ffffff' },
+    { label: 'Clientes Ativos',    value: active.length,               color: GREEN     },
+    { label: 'Faturamento Mensal', value: formatCurrency(totalRevenue), color: RED       },
+    { label: 'Ticket Médio',       value: ticket ? formatCurrency(ticket) : '—', color: '#9ca3af' },
   ]
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-5">
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-1"
             style={{ color: 'rgba(255,255,255,0.3)' }}>
             Gestão de Clientes · Contratos e Receita
           </p>
-          <h1 className="text-2xl font-black tracking-tight text-white">Clientes</h1>
+          <h1 className="text-xl md:text-2xl font-black tracking-tight text-white">Clientes</h1>
         </div>
         <button onClick={openNew}
-          className="flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
-          style={{ background: RED, boxShadow: `0 4px 18px ${RED}40` }}>
+          className="flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+          style={{ background: RED, boxShadow: `0 4px 18px ${RED}40`, minHeight: '44px' }}>
           <UserPlus className="h-3.5 w-3.5" /> Novo Cliente
         </button>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map(c => (
-          <div key={c.label} className="rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
-            <div className="flex items-center justify-between mb-4">
+          <div key={c.label} className="rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
+            <div className="flex items-center justify-between mb-3 md:mb-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em]"
                 style={{ color: 'rgba(255,255,255,0.3)' }}>{c.label}</p>
               <div className="h-2 w-2 rounded-full" style={{ background: c.color, boxShadow: `0 0 6px ${c.color}` }} />
             </div>
-            <p className="text-[32px] font-black leading-none tracking-tight" style={{ color: c.color }}>
+            <p className="text-[24px] md:text-[32px] font-black leading-none tracking-tight" style={{ color: c.color }}>
               {c.value}
             </p>
           </div>
@@ -141,56 +141,59 @@ export function Clientes() {
       {/* Table card */}
       <div className="rounded-2xl overflow-hidden" style={{ background: CARD, border: CARD_B }}>
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 p-5"
+        <div className="flex flex-wrap items-center gap-3 p-4 md:p-5"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
               style={{ color: 'rgba(255,255,255,0.25)' }} />
             <input
               placeholder="Buscar por nome, empresa, email..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full rounded-xl pl-9 pr-4 py-2 text-[12px] outline-none"
+              className="w-full rounded-xl pl-9 pr-4 py-2.5 text-[12px] outline-none"
               style={{
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.07)',
                 color: 'rgba(255,255,255,0.8)',
+                minHeight: '44px',
               }}
               onFocus={e  => (e.currentTarget.style.borderColor = `${RED}50`)}
               onBlur={e   => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)')}
             />
           </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40 rounded-xl text-[12px] border-white/[0.07] bg-white/[0.05] text-white/70">
-              <Filter className="h-3 w-3 mr-1.5 opacity-40" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {(['Ativo','Trial','Inativo','Churned'] as const).map(s =>
-                <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40 rounded-xl text-[12px] border-white/[0.07] bg-white/[0.05] text-white/70" style={{ minHeight: '44px' }}>
+                <Filter className="h-3 w-3 mr-1.5 opacity-40" />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                {(['Ativo','Trial','Inativo','Churned'] as const).map(s =>
+                  <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          <Select value={contractFilter} onValueChange={setContractFilter}>
-            <SelectTrigger className="w-44 rounded-xl text-[12px] border-white/[0.07] bg-white/[0.05] text-white/70">
-              <SelectValue placeholder="Contrato" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os contratos</SelectItem>
-              {(['Mensal','Trimestral','Semestral','Anual'] as const).map(c =>
-                <SelectItem key={c} value={c}>{c}</SelectItem>)}
-            </SelectContent>
-          </Select>
+            <Select value={contractFilter} onValueChange={setContractFilter}>
+              <SelectTrigger className="w-full sm:w-44 rounded-xl text-[12px] border-white/[0.07] bg-white/[0.05] text-white/70" style={{ minHeight: '44px' }}>
+                <SelectValue placeholder="Contrato" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os contratos</SelectItem>
+                {(['Mensal','Trimestral','Semestral','Anual'] as const).map(c =>
+                  <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          <button className="ml-auto flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-white/[0.07]"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)' }}>
-            <Download className="h-3.5 w-3.5" /> Exportar
-          </button>
+            <button className="flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-[12px] font-semibold transition-colors hover:bg-white/[0.07] sm:ml-auto"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', minHeight: '44px' }}>
+              <Download className="h-3.5 w-3.5" /> Exportar
+            </button>
+          </div>
         </div>
 
-        {/* Table */}
+        {/* Table — horizontal scroll on mobile */}
         {loading ? (
           <div className="flex items-center justify-center py-20 gap-3" style={{ color: 'rgba(255,255,255,0.3)' }}>
             <Loader2 className="h-5 w-5 animate-spin" style={{ color: RED }} />
@@ -198,7 +201,7 @@ export function Clientes() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" style={{ minWidth: '700px' }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   {[
@@ -292,12 +295,12 @@ export function Clientes() {
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => openEdit(c)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.08]"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.08]"
                           style={{ color: 'rgba(255,255,255,0.4)' }}>
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button onClick={() => setDeleteTarget(c)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
                           style={{ color: 'rgba(255,255,255,0.4)' }}
                           onMouseEnter={e => { e.currentTarget.style.background = `${RED}20`; e.currentTarget.style.color = RED }}
                           onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}>
@@ -312,7 +315,7 @@ export function Clientes() {
           </div>
         )}
 
-        <div className="flex items-center justify-between px-6 py-3"
+        <div className="flex items-center justify-between px-4 md:px-6 py-3"
           style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
             Mostrando <span className="font-bold text-white/60">{filtered.length}</span> de <span className="font-bold text-white/60">{clients.length}</span> clientes

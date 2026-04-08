@@ -23,7 +23,12 @@ const activeClients = [
   { initials: 'TV', name: 'TechVision SA',    revenue: 'R$ 18k/ano', color: 'bg-white/20'  },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  open: boolean
+  onClose: () => void
+}
+
+export function Sidebar({ open, onClose }: SidebarProps) {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -32,12 +37,16 @@ export function Sidebar() {
     navigate('/login', { replace: true })
   }
 
-  const initials    = user?.email ? user.email.slice(0, 2).toUpperCase() : '??'
+  const initials     = user?.email ? user.email.slice(0, 2).toUpperCase() : '??'
   const displayEmail = user?.email ?? ''
 
   return (
     <aside
-      className="fixed inset-y-0 left-0 z-50 flex w-[220px] flex-col"
+      className={cn(
+        'fixed inset-y-0 left-0 z-50 flex w-[220px] flex-col transition-transform duration-300',
+        // Always visible on md+, drawer on mobile
+        open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      )}
       style={{ background: '#0a0a0a', borderRight: '1px solid rgba(255,255,255,0.07)' }}
     >
       {/* Logo */}
@@ -62,7 +71,7 @@ export function Sidebar() {
           <ul className="space-y-0.5">
             {navItems.map(({ to, icon: Icon, label, badge }) => (
               <li key={to}>
-                <NavLink to={to}>
+                <NavLink to={to} onClick={onClose}>
                   {({ isActive }) => (
                     <span
                       className={cn(
@@ -105,7 +114,7 @@ export function Sidebar() {
           <ul className="space-y-0.5">
             {activeClients.map(c => (
               <li key={c.name}>
-                <NavLink to="/clientes" className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-white/[0.04] cursor-pointer">
+                <NavLink to="/clientes" onClick={onClose} className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-white/[0.04] cursor-pointer">
                   <div className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[9px] font-bold text-white', c.color)}>
                     {c.initials}
                   </div>

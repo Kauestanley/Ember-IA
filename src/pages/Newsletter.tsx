@@ -33,7 +33,7 @@ function PostCard({ post, onLike, onEdit, onDelete, onTogglePin }: {
 
   return (
     <div
-      className="rounded-2xl p-5 transition-all duration-200 group"
+      className="rounded-2xl p-4 md:p-5 transition-all duration-200 group"
       style={{
         background: CARD,
         border: post.pinned ? `1px solid ${cat.color}40` : CARD_B,
@@ -45,7 +45,7 @@ function PostCard({ post, onLike, onEdit, onDelete, onTogglePin }: {
           <Pin className="h-3 w-3" /> Fixado
         </div>
       )}
-      <div className="flex items-start gap-3.5">
+      <div className="flex items-start gap-3">
         <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[11px] font-black text-white', post.author_color)}>
           {post.author_initials}
         </div>
@@ -65,28 +65,28 @@ function PostCard({ post, onLike, onEdit, onDelete, onTogglePin }: {
           <p className="text-[13px] leading-relaxed whitespace-pre-wrap text-white/65">{post.content}</p>
           <div className="flex items-center gap-4 mt-4">
             <button onClick={onLike}
-              className="flex items-center gap-1.5 text-[11px] transition-colors hover:text-red-400"
+              className="flex items-center gap-1.5 text-[11px] transition-colors hover:text-red-400 min-h-[44px] min-w-[44px]"
               style={{ color: 'rgba(255,255,255,0.3)' }}>
               <Heart className="h-3.5 w-3.5" /> {post.likes}
             </button>
-            <button className="flex items-center gap-1.5 text-[11px] transition-colors"
+            <button className="flex items-center gap-1.5 text-[11px] transition-colors min-h-[44px]"
               style={{ color: 'rgba(255,255,255,0.3)' }}>
               <MessageCircle className="h-3.5 w-3.5" /> {post.comments} comentários
             </button>
-            <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="ml-auto flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <button onClick={onTogglePin}
-                className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] transition-colors hover:bg-white/[0.06]"
+                className="flex items-center gap-1 rounded-lg px-2 py-2 text-[11px] transition-colors hover:bg-white/[0.06] min-h-[44px]"
                 style={{ color: 'rgba(255,255,255,0.3)' }}>
                 {post.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-                {post.pinned ? 'Desafixar' : 'Fixar'}
+                <span className="hidden sm:inline ml-1">{post.pinned ? 'Desafixar' : 'Fixar'}</span>
               </button>
               <button onClick={onEdit}
-                className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.07]"
+                className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-white/[0.07]"
                 style={{ color: 'rgba(255,255,255,0.35)' }}>
                 <Pencil className="h-3.5 w-3.5" />
               </button>
               <button onClick={onDelete}
-                className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
                 style={{ color: 'rgba(255,255,255,0.35)' }}
                 onMouseEnter={e => { e.currentTarget.style.background = `${RED}20`; e.currentTarget.style.color = RED }}
                 onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}>
@@ -137,26 +137,26 @@ export function Newsletter() {
   ).sort((a, b) => b.count - a.count).slice(0, 5)
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-5">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-1"
             style={{ color: 'rgba(255,255,255,0.3)' }}>
             Comunicação Interna · Equipe
           </p>
-          <h1 className="text-2xl font-black tracking-tight text-white">Newsletter Interna</h1>
+          <h1 className="text-xl md:text-2xl font-black tracking-tight text-white">Newsletter Interna</h1>
         </div>
         <button onClick={openNew}
-          className="flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
-          style={{ background: RED, boxShadow: `0 4px 18px ${RED}40` }}>
+          className="flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+          style={{ background: RED, boxShadow: `0 4px 18px ${RED}40`, minHeight: '44px' }}>
           <Plus className="h-3.5 w-3.5" /> Nova Publicação
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Feed */}
-        <div className="col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4">
           {/* Filter pills */}
           <div className="flex gap-1.5 flex-wrap">
             {allFilters.map(cat => {
@@ -164,11 +164,12 @@ export function Newsletter() {
               const cfg = cat !== 'Todos' ? categoryConfig[cat as NewsPostRow['category']] : null
               return (
                 <button key={cat} onClick={() => setFilter(cat)}
-                  className="rounded-full px-3.5 py-1.5 text-[11px] font-bold transition-all duration-150"
+                  className="rounded-full px-3.5 py-2 text-[11px] font-bold transition-all duration-150"
                   style={{
                     background: isActive ? (cfg ? cfg.bg : 'rgba(255,255,255,0.1)') : 'rgba(255,255,255,0.04)',
                     color:      isActive ? (cfg ? cfg.color : '#fff') : 'rgba(255,255,255,0.3)',
                     border:     isActive ? `1px solid ${cfg ? cfg.color + '40' : 'rgba(255,255,255,0.15)'}` : '1px solid rgba(255,255,255,0.06)',
+                    minHeight: '36px',
                   }}>
                   {cat}
                 </button>
@@ -188,8 +189,8 @@ export function Newsletter() {
               style={{ background: CARD, border: CARD_B }}>
               <p className="text-[13px] font-semibold mb-1 text-white/40">Nenhuma publicação encontrada</p>
               <button onClick={openNew}
-                className="mt-4 flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-bold text-white"
-                style={{ background: RED }}>
+                className="mt-4 flex items-center gap-1.5 rounded-full px-4 py-2.5 text-[12px] font-bold text-white"
+                style={{ background: RED, minHeight: '44px' }}>
                 <Plus className="h-3.5 w-3.5" /> Criar publicação
               </button>
             </div>
@@ -213,10 +214,10 @@ export function Newsletter() {
             <p className="text-[13px] font-bold mb-4 text-white/75">Resumo da Semana</p>
             <div className="space-y-3">
               {[
-                { label: 'Publicações', value: stats.total,      color: '#fff',  bg: 'rgba(255,255,255,0.08)' },
-                { label: 'Conquistas',  value: stats.conquistas, color: GREEN,   bg: `${GREEN}15`             },
-                { label: 'Alertas',     value: stats.alertas,    color: RED,     bg: `${RED}15`               },
-                { label: 'Curtidas',    value: stats.totalLikes, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+                { label: 'Publicações', value: stats.total,      color: '#fff',    bg: 'rgba(255,255,255,0.08)' },
+                { label: 'Conquistas',  value: stats.conquistas, color: GREEN,     bg: `${GREEN}15`             },
+                { label: 'Alertas',     value: stats.alertas,    color: RED,       bg: `${RED}15`               },
+                { label: 'Curtidas',    value: stats.totalLikes, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)'  },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between">
                   <span className="text-[12px] text-white/40">{item.label}</span>
