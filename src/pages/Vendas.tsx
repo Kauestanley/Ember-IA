@@ -4,28 +4,21 @@ import {
 } from 'recharts'
 import {
   Users, TrendingUp, DollarSign, Clock, Target,
-  ShoppingCart, AlertTriangle, Megaphone, ArrowUpRight, ArrowDownRight,
+  ShoppingCart, AlertTriangle, Megaphone, ArrowUpRight, ArrowDownRight, Loader2,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { salesMetrics, salesBySegment, funnelData, churnTrend, monthlyRevenue } from '@/data/mockData'
-import { formatCurrency, formatPercent, formatNumber } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { salesBySegment, funnelData, churnTrend, monthlyRevenue } from '@/data/mockData'
+import { useVendasMetrics } from '@/hooks/useVendasMetrics'
+import { formatCurrency, formatPercent, formatNumber, cn } from '@/lib/utils'
 
-function KpiCard({
-  label, value, delta, icon: Icon, iconColor, iconBg, deltaLabel,
-}: {
-  label: string
-  value: string | number
-  delta: number
-  icon: React.ElementType
-  iconColor: string
-  iconBg: string
-  deltaLabel?: string
+const COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#3b82f6', '#6b7280']
+
+function KpiCard({ label, value, delta, icon: Icon, iconColor, iconBg, deltaLabel }: {
+  label: string; value: string | number; delta: number
+  icon: React.ElementType; iconColor: string; iconBg: string; deltaLabel?: string
 }) {
-  const isPositive = delta >= 0
-  const formattedDelta = Math.abs(delta)
-
+  const isPos = delta >= 0
   return (
     <Card className="border-border/50 hover:border-border transition-colors">
       <CardContent className="p-5">
@@ -35,16 +28,10 @@ function KpiCard({
             <Icon className={cn('h-4 w-4', iconColor)} />
           </div>
         </div>
-        <p className="text-2xl font-bold text-foreground mb-1">{value}</p>
+        <p className="text-2xl font-bold mb-1">{value}</p>
         <div className="flex items-center gap-1.5">
-          {isPositive ? (
-            <ArrowUpRight className="h-3.5 w-3.5 text-emerald-400" />
-          ) : (
-            <ArrowDownRight className="h-3.5 w-3.5 text-rose-400" />
-          )}
-          <span className={cn('text-xs font-medium', isPositive ? 'text-emerald-400' : 'text-rose-400')}>
-            {formattedDelta}%
-          </span>
+          {isPos ? <ArrowUpRight className="h-3.5 w-3.5 text-emerald-400" /> : <ArrowDownRight className="h-3.5 w-3.5 text-rose-400" />}
+          <span className={cn('text-xs font-medium', isPos ? 'text-emerald-400' : 'text-rose-400')}>{Math.abs(delta)}%</span>
           <span className="text-xs text-muted-foreground">{deltaLabel ?? 'vs mês anterior'}</span>
         </div>
       </CardContent>
@@ -52,20 +39,17 @@ function KpiCard({
   )
 }
 
-const COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#3b82f6', '#6b7280']
-
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) => {
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-lg border border-border bg-card p-3 shadow-xl text-sm min-w-[160px]">
-      <p className="mb-2 font-semibold text-foreground">{label}</p>
+      <p className="mb-2 font-semibold">{label}</p>
       {payload.map(p => (
         <div key={p.name} className="flex items-center justify-between gap-4 text-xs">
           <span className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="h-2 w-2 rounded-full" style={{ background: p.color }} />
-            {p.name}
+            <span className="h-2 w-2 rounded-full" style={{ background: p.color }} />{p.name}
           </span>
-          <span className="font-medium text-foreground">
+          <span className="font-medium">
             {p.name === 'Churn' ? formatPercent(p.value) : p.name === 'Novos Clientes' ? p.value : formatCurrency(p.value)}
           </span>
         </div>
@@ -75,7 +59,17 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export function Vendas() {
-  const m = salesMetrics
+  const { metrics: m, loading } = useVendasMetrics()
+
+  if (loading || !m) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[60vh] gap-2 text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin" /> Carregando métricas...
+      </div>
+    )
+  }
+
+  const ratio = m.ltv / m.cac
 
   const kpis = [
     { label: 'Total de Clientes', value: formatNumber(m.totalClients), delta: 4.2, icon: Users, iconColor: 'text-indigo-400', iconBg: 'bg-indigo-500/10' },
@@ -88,59 +82,46 @@ export function Vendas() {
     { label: 'Churn Rate', value: formatPercent(m.churnRate), delta: -0.3, icon: AlertTriangle, iconColor: 'text-orange-400', iconBg: 'bg-orange-500/10' },
   ]
 
-  const ratio = m.ltv / m.cac
-
   return (
     <div className="p-8">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Métricas de Vendas</h1>
-          <p className="mt-1 text-sm text-muted-foreground">KPIs, performance comercial e análise de funil — Outubro 2024</p>
+          <h1 className="text-2xl font-bold tracking-tight">Métricas de Vendas</h1>
+          <p className="mt-1 text-sm text-muted-foreground">KPIs calculados em tempo real a partir dos dados de clientes</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="info" className="text-xs">Ao vivo</Badge>
-          <span className="text-xs text-muted-foreground">Atualizado agora</span>
-        </div>
+        <Badge variant="info" className="text-xs">Ao vivo</Badge>
       </div>
 
       {/* KPI Grid */}
       <div className="mb-6 grid grid-cols-4 gap-4">
-        {kpis.map(kpi => (
-          <KpiCard key={kpi.label} {...kpi} />
-        ))}
+        {kpis.map(kpi => <KpiCard key={kpi.label} {...kpi} />)}
       </div>
 
-      {/* LTV/CAC Highlight */}
+      {/* Highlight Row */}
       <div className="mb-6 grid grid-cols-3 gap-4">
         <Card className="border-border/50 bg-gradient-to-br from-indigo-500/10 to-purple-500/5">
           <CardContent className="p-5">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Ratio LTV:CAC</p>
-            <p className="text-4xl font-black text-foreground">{ratio.toFixed(1)}x</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {ratio >= 3 ? (
-                <span className="text-emerald-400">Excelente — meta: &gt; 3x ✓</span>
-              ) : (
-                <span className="text-amber-400">Abaixo do ideal — meta: &gt; 3x</span>
-              )}
+            <p className="text-4xl font-black">{ratio.toFixed(1)}x</p>
+            <p className="mt-1 text-xs">
+              {ratio >= 3 ? <span className="text-emerald-400">Excelente — meta: &gt; 3x ✓</span> : <span className="text-amber-400">Abaixo do ideal — meta: &gt; 3x</span>}
             </p>
           </CardContent>
         </Card>
-
         <Card className="border-border/50">
           <CardContent className="p-5">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Gastos em Marketing</p>
-            <p className="text-3xl font-bold text-foreground">{formatCurrency(m.marketingSpend)}</p>
+            <p className="text-3xl font-bold">{formatCurrency(m.marketingSpend)}</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Ads: <span className="text-foreground font-medium">{formatCurrency(m.adSpend)}</span>
               {' · '}Orgânico: <span className="text-foreground font-medium">{formatCurrency(m.marketingSpend - m.adSpend)}</span>
             </p>
           </CardContent>
         </Card>
-
         <Card className="border-border/50">
           <CardContent className="p-5">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Novos Clientes (mês)</p>
-            <p className="text-3xl font-bold text-foreground">{m.newClientsThisMonth}</p>
+            <p className="text-3xl font-bold">{m.newClientsThisMonth}</p>
             <div className="mt-1 flex items-center gap-1.5 text-xs">
               <ArrowUpRight className="h-3.5 w-3.5 text-emerald-400" />
               <span className="text-emerald-400 font-medium">{m.revenueGrowthMoM}%</span>
@@ -152,7 +133,6 @@ export function Vendas() {
 
       {/* Charts Row 1 */}
       <div className="mb-4 grid grid-cols-3 gap-4">
-        {/* MRR Evolution */}
         <Card className="col-span-2 border-border/50">
           <CardHeader>
             <CardTitle>Evolução do MRR</CardTitle>
@@ -177,7 +157,6 @@ export function Vendas() {
           </CardContent>
         </Card>
 
-        {/* Segment Pie */}
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle>Clientes por Segmento</CardTitle>
@@ -186,18 +165,8 @@ export function Vendas() {
           <CardContent>
             <ResponsiveContainer width="100%" height={180}>
               <PieChart>
-                <Pie
-                  data={salesBySegment}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {salesBySegment.map((entry, i) => (
-                    <Cell key={entry.segment} fill={COLORS[i % COLORS.length]} />
-                  ))}
+                <Pie data={salesBySegment} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+                  {salesBySegment.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip
                   formatter={(value) => [`${value}%`, '']}
@@ -210,7 +179,7 @@ export function Vendas() {
                 <div key={s.segment} className="flex items-center gap-1.5 text-xs">
                   <div className="h-2 w-2 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
                   <span className="text-muted-foreground truncate">{s.segment}</span>
-                  <span className="ml-auto font-medium text-foreground">{s.value}%</span>
+                  <span className="ml-auto font-medium">{s.value}%</span>
                 </div>
               ))}
             </div>
@@ -220,7 +189,6 @@ export function Vendas() {
 
       {/* Charts Row 2 */}
       <div className="grid grid-cols-2 gap-4">
-        {/* Churn Trend */}
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle>Churn vs Novos Clientes</CardTitle>
@@ -242,7 +210,6 @@ export function Vendas() {
           </CardContent>
         </Card>
 
-        {/* Sales Funnel */}
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle>Funil de Vendas</CardTitle>
@@ -251,32 +218,26 @@ export function Vendas() {
           <CardContent>
             <div className="space-y-2.5">
               {funnelData.map((stage, i) => {
-                const maxVal = funnelData[0].value
-                const pct = Math.round((stage.value / maxVal) * 100)
+                const pct = Math.round((stage.value / funnelData[0].value) * 100)
                 const convRate = i > 0 ? Math.round((stage.value / funnelData[i - 1].value) * 100) : 100
                 return (
                   <div key={stage.stage}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-5 w-5 items-center justify-center rounded text-[9px] font-bold bg-muted text-muted-foreground">
-                          {i + 1}
-                        </div>
-                        <span className="text-sm font-medium text-foreground">{stage.stage}</span>
+                        <div className="flex h-5 w-5 items-center justify-center rounded text-[9px] font-bold bg-muted text-muted-foreground">{i + 1}</div>
+                        <span className="text-sm font-medium">{stage.stage}</span>
                         {i > 0 && (
                           <Badge variant={convRate >= 50 ? 'success' : convRate >= 30 ? 'warning' : 'destructive'} className="text-[10px] px-1.5 h-4">
                             {convRate}% conv.
                           </Badge>
                         )}
                       </div>
-                      <span className="text-sm font-bold text-foreground">{stage.value}</span>
+                      <span className="text-sm font-bold">{stage.value}</span>
                     </div>
                     <div className="relative h-7 rounded-md overflow-hidden bg-muted/30">
                       <div
                         className="h-full rounded-md transition-all duration-700 flex items-center justify-end pr-2"
-                        style={{
-                          width: `${pct}%`,
-                          background: `linear-gradient(90deg, ${COLORS[i]} 0%, ${COLORS[i]}cc 100%)`,
-                        }}
+                        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${COLORS[i]} 0%, ${COLORS[i]}cc 100%)` }}
                       >
                         <span className="text-[10px] font-bold text-white">{pct}%</span>
                       </div>

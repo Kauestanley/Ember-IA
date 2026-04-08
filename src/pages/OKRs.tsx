@@ -1,21 +1,25 @@
+import { useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { Target, TrendingUp, DollarSign, TrendingDown, ChevronRight } from 'lucide-react'
+import { Target, TrendingUp, DollarSign, TrendingDown, ChevronRight, Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { okrs, monthlyRevenue } from '@/data/mockData'
-import { formatCurrency, formatPercent } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { OKRDialog } from '@/components/okrs/OKRDialog'
+import { useOKRs } from '@/hooks/useOKRs'
+import { monthlyRevenue } from '@/data/mockData'
+import { formatCurrency, formatPercent, cn } from '@/lib/utils'
+import { type OKRRow } from '@/lib/supabase'
 
-function progressColor(pct: number) {
-  if (pct >= 80) return 'bg-emerald-500'
-  if (pct >= 50) return 'bg-amber-500'
+function progressColor(p: number) {
+  if (p >= 80) return 'bg-emerald-500'
+  if (p >= 50) return 'bg-amber-500'
   return 'bg-rose-500'
 }
-
-function progressVariant(pct: number): 'success' | 'warning' | 'destructive' {
-  if (pct >= 80) return 'success'
-  if (pct >= 50) return 'warning'
+function progressVariant(p: number): 'success' | 'warning' | 'destructive' {
+  if (p >= 80) return 'success'
+  if (p >= 50) return 'warning'
   return 'destructive'
 }
 
@@ -25,7 +29,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
     <div className="rounded-lg border border-border bg-card p-3 shadow-xl text-sm">
       <p className="mb-2 font-semibold text-foreground">{label}</p>
       {payload.map(p => (
-        <div key={p.name} className="flex items-center justify-between gap-4">
+        <div key={p.name} className="flex items-center justify-between gap-4 text-xs">
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <span className="h-2 w-2 rounded-full" style={{ background: p.color }} />
             {p.name}
@@ -38,20 +42,42 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export function OKRs() {
+  const { okrs, loading, createOKR, updateOKR, deleteOKR } = useOKRs()
+
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<OKRRow | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<OKRRow | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  function openNew() { setEditing(null); setDialogOpen(true) }
+  function openEdit(okr: OKRRow) { setEditing(okr); setDialogOpen(true) }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    await deleteOKR(deleteTarget.id)
+    setDeleting(false)
+    setDeleteTarget(null)
+  }
+
   const totalRevenue = monthlyRevenue[monthlyRevenue.length - 1].faturamento
   const totalExpenses = monthlyRevenue[monthlyRevenue.length - 1].despesas
   const totalProfit = monthlyRevenue[monthlyRevenue.length - 1].lucro
   const profitMargin = (totalProfit / totalRevenue) * 100
-
   const ytdRevenue = monthlyRevenue.reduce((s, m) => s + m.faturamento, 0)
   const ytdExpenses = monthlyRevenue.reduce((s, m) => s + m.despesas, 0)
   const ytdProfit = monthlyRevenue.reduce((s, m) => s + m.lucro, 0)
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">OKRs & Financeiro</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Objetivos, metas e evolução financeira — Q4 2024</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">OKRs & Financeiro</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Objetivos, metas e evolução financeira</p>
+        </div>
+        <Button className="gap-2" onClick={openNew}>
+          <Plus className="h-4 w-4" /> Novo OKR
+        </Button>
       </div>
 
       {/* Financial Summary */}
@@ -70,12 +96,9 @@ export function OKRs() {
                   <card.icon className={cn('h-4 w-4', card.color)} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{card.value}</p>
+              <p className="text-2xl font-bold">{card.value}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                <span className={card.delta.startsWith('+') ? 'text-emerald-400' : 'text-muted-foreground'}>
-                  {card.delta}
-                </span>{' '}
-                vs mês anterior
+                <span className={card.delta.startsWith('+') ? 'text-emerald-400' : 'text-muted-foreground'}>{card.delta}</span> vs mês anterior
               </p>
             </CardContent>
           </Card>
@@ -93,18 +116,12 @@ export function OKRs() {
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={monthlyRevenue} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="gradFat" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gradLuc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gradDesp" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-                  </linearGradient>
+                  {[['gradFat', '#6366f1'], ['gradLuc', '#10b981'], ['gradDesp', '#f43f5e']].map(([id, color]) => (
+                    <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={color} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 27.9% 16.9%)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(217.9 10.6% 64.9%)' }} axisLine={false} tickLine={false} />
@@ -133,13 +150,12 @@ export function OKRs() {
               <div key={item.label}>
                 <div className="flex justify-between mb-1.5">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <span className="text-xs font-semibold text-foreground">{item.value}</span>
+                  <span className="text-xs font-semibold">{item.value}</span>
                 </div>
                 <Progress value={item.pct} indicatorClassName={item.color} className="h-1.5" />
                 <p className="mt-0.5 text-right text-[10px] text-muted-foreground">{item.pct}%</p>
               </div>
             ))}
-
             <div className="mt-4 rounded-lg bg-muted/30 p-3">
               <p className="text-xs text-muted-foreground mb-1">Margem média 2024</p>
               <p className="text-xl font-bold text-emerald-400">{formatPercent((ytdProfit / ytdRevenue) * 100)}</p>
@@ -152,9 +168,20 @@ export function OKRs() {
       {/* OKR Cards */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Objetivos e Key Results</h2>
-          <Badge variant="info">Q4 2024</Badge>
+          <h2 className="text-lg font-semibold">Objetivos e Key Results</h2>
+          {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
         </div>
+
+        {!loading && okrs.length === 0 && (
+          <Card className="border-dashed border-border/50">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Target className="h-8 w-8 text-muted-foreground mb-3" />
+              <p className="text-sm font-medium text-muted-foreground">Nenhum OKR cadastrado</p>
+              <p className="text-xs text-muted-foreground mt-1 mb-4">Crie seu primeiro objetivo para começar a rastrear o progresso</p>
+              <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="h-3.5 w-3.5" />Criar primeiro OKR</Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           {okrs.map(okr => (
@@ -168,51 +195,85 @@ export function OKRs() {
                         {okr.owner.split(' ').map(n => n[0]).join('')}
                       </div>
                       <span className="text-xs text-muted-foreground">{okr.owner}</span>
+                      <Badge variant="outline" className="text-[10px] px-1.5 h-4 ml-1">{okr.quarter}</Badge>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <Badge variant={progressVariant(okr.progress)}>{okr.progress}%</Badge>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(okr)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={() => setDeleteTarget(okr)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
-
                 <div className="mt-3">
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                    <span>Progresso geral</span>
-                    <span>{okr.progress}%</span>
+                    <span>Progresso geral</span><span>{okr.progress}%</span>
                   </div>
                   <Progress value={okr.progress} indicatorClassName={progressColor(okr.progress)} className="h-2" />
                 </div>
               </CardHeader>
-
               <CardContent className="pt-0">
-                <div className="space-y-3">
-                  {okr.keyResults.map(kr => {
-                    const pct = Math.min(100, Math.round((kr.current / kr.target) * 100))
-                    const isReverse = kr.unit === '%' && kr.description.toLowerCase().includes('reduzir')
-                    const actualPct = isReverse ? Math.min(100, Math.round((kr.target / kr.current) * 100)) : pct
-                    return (
-                      <div key={kr.id} className="group">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                            <span className="text-xs text-muted-foreground truncate">{kr.description}</span>
+                {okr.key_results.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">Nenhum Key Result cadastrado</p>
+                ) : (
+                  <div className="space-y-3">
+                    {okr.key_results.map(kr => {
+                      const isReverse = kr.description.toLowerCase().includes('reduzir')
+                      const rawPct = Math.min(100, Math.round((kr.current_value / kr.target_value) * 100))
+                      const pct = isReverse ? Math.min(100, Math.round((kr.target_value / kr.current_value) * 100)) : rawPct
+                      return (
+                        <div key={kr.id}>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <span className="text-xs text-muted-foreground truncate">{kr.description}</span>
+                            </div>
+                            <span className="text-xs font-semibold shrink-0 whitespace-nowrap">
+                              {kr.current_value}{kr.unit} / {kr.target_value}{kr.unit}
+                            </span>
                           </div>
-                          <span className="text-xs font-semibold text-foreground shrink-0 whitespace-nowrap">
-                            {kr.current}{kr.unit} / {kr.target}{kr.unit}
-                          </span>
+                          <div className="ml-5">
+                            <Progress value={pct} indicatorClassName={progressColor(pct)} className="h-1" />
+                          </div>
                         </div>
-                        <div className="ml-5">
-                          <Progress value={actualPct} indicatorClassName={progressColor(actualPct)} className="h-1" />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                      )
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
       </div>
+
+      {/* Create / Edit Dialog */}
+      <OKRDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initial={editing}
+        onSave={data => editing ? updateOKR(editing.id, data) : createOKR(data)}
+      />
+
+      {/* Delete Confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={o => !o && setDeleteTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Excluir OKR?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Excluir <span className="font-semibold text-foreground">"{deleteTarget?.objective}"</span>? Todos os Key Results serão removidos junto.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>
+              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Excluindo...</> : 'Sim, excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

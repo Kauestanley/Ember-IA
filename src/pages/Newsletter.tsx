@@ -1,82 +1,76 @@
 import { useState } from 'react'
-import { Heart, MessageCircle, Pin, Send, Filter, Plus } from 'lucide-react'
+import { Heart, MessageCircle, Pin, PinOff, Filter, Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { newsPosts, type NewsPost } from '@/data/mockData'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { PostDialog } from '@/components/newsletter/PostDialog'
+import { useNewsletter } from '@/hooks/useNewsletter'
+import { type NewsPostRow } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-const categoryConfig: Record<NewsPost['category'], { variant: 'success' | 'info' | 'warning' | 'destructive' | 'purple'; label: string }> = {
-  Conquista: { variant: 'success', label: '🏆 Conquista' },
-  Atualização: { variant: 'info', label: '📋 Atualização' },
-  Alerta: { variant: 'warning', label: '⚠️ Alerta' },
-  Novidade: { variant: 'purple', label: '✨ Novidade' },
-  Estratégia: { variant: 'info', label: '🎯 Estratégia' },
+const categoryConfig: Record<NewsPostRow['category'], { variant: 'success' | 'info' | 'warning' | 'destructive' | 'purple'; label: string }> = {
+  Conquista:  { variant: 'success',     label: '🏆 Conquista' },
+  Atualização:{ variant: 'info',        label: '📋 Atualização' },
+  Alerta:     { variant: 'warning',     label: '⚠️ Alerta' },
+  Novidade:   { variant: 'purple',      label: '✨ Novidade' },
+  Estratégia: { variant: 'info',        label: '🎯 Estratégia' },
 }
 
-function PostCard({ post, liked, onLike }: { post: NewsPost; liked: boolean; onLike: () => void }) {
-  const timeAgo = formatDistanceToNow(new Date(post.timestamp), { addSuffix: true, locale: ptBR })
+function PostCard({
+  post, onLike, onEdit, onDelete, onTogglePin,
+}: {
+  post: NewsPostRow
+  onLike: () => void
+  onEdit: () => void
+  onDelete: () => void
+  onTogglePin: () => void
+}) {
+  const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ptBR })
   const cat = categoryConfig[post.category]
 
   return (
-    <Card className={cn(
-      'border-border/50 transition-all duration-200 hover:border-border',
-      post.pinned && 'border-l-2 border-l-primary'
-    )}>
+    <Card className={cn('border-border/50 transition-all duration-200 hover:border-border group', post.pinned && 'border-l-2 border-l-primary')}>
       <CardContent className="p-5">
         {post.pinned && (
           <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-primary">
-            <Pin className="h-3 w-3" />
-            Fixado
+            <Pin className="h-3 w-3" /> Fixado
           </div>
         )}
-
         <div className="flex items-start gap-4">
-          {/* Avatar */}
-          <div className={cn(
-            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white',
-            post.authorColor
-          )}>
-            {post.authorInitials}
+          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white', post.author_color)}>
+            {post.author_initials}
           </div>
-
-          {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="font-semibold text-foreground text-sm">{post.author}</span>
-              <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
-                {post.authorRole}
-              </span>
-              <Badge variant={cat.variant} className="text-[10px] px-1.5 py-0">
-                {cat.label}
-              </Badge>
+              <span className="font-semibold text-sm">{post.author}</span>
+              <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">{post.author_role}</span>
+              <Badge variant={cat.variant} className="text-[10px] px-1.5 py-0">{cat.label}</Badge>
               <span className="ml-auto text-xs text-muted-foreground">{timeAgo}</span>
             </div>
-
-            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
-              {post.content}
-            </p>
-
-            {/* Actions */}
+            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{post.content}</p>
             <div className="mt-4 flex items-center gap-4">
-              <button
-                onClick={onLike}
-                className={cn(
-                  'flex items-center gap-1.5 text-xs transition-colors',
-                  liked ? 'text-rose-400' : 'text-muted-foreground hover:text-rose-400'
-                )}
-              >
-                <Heart className={cn('h-3.5 w-3.5', liked && 'fill-rose-400')} />
-                {post.likes + (liked ? 1 : 0)}
+              <button onClick={onLike} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-rose-400 transition-colors">
+                <Heart className="h-3.5 w-3.5" /> {post.likes}
               </button>
               <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                <MessageCircle className="h-3.5 w-3.5" />
-                {post.comments} comentários
+                <MessageCircle className="h-3.5 w-3.5" /> {post.comments} comentários
               </button>
+              {/* Actions — visible on hover */}
+              <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={onTogglePin} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded hover:bg-muted">
+                  {post.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                  {post.pinned ? 'Desafixar' : 'Fixar'}
+                </button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={onDelete}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -86,85 +80,49 @@ function PostCard({ post, liked, onLike }: { post: NewsPost; liked: boolean; onL
 }
 
 export function Newsletter() {
+  const { posts, loading, createPost, updatePost, deletePost, likePost, togglePin } = useNewsletter()
+
   const [filter, setFilter] = useState<string>('all')
-  const [liked, setLiked] = useState<Record<string, boolean>>({})
-  const [composing, setComposing] = useState(false)
-  const [draft, setDraft] = useState('')
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<NewsPostRow | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<NewsPostRow | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
-  const sorted = [...newsPosts].sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1
-    if (!a.pinned && b.pinned) return 1
-    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  })
+  const filtered = filter === 'all' ? posts : posts.filter(p => p.category === filter)
 
-  const filtered = filter === 'all' ? sorted : sorted.filter(p => p.category === filter)
+  function openNew() { setEditing(null); setDialogOpen(true) }
+  function openEdit(p: NewsPostRow) { setEditing(p); setDialogOpen(true) }
 
-  const toggleLike = (id: string) => setLiked(l => ({ ...l, [id]: !l[id] }))
+  async function confirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    await deletePost(deleteTarget.id)
+    setDeleting(false)
+    setDeleteTarget(null)
+  }
 
   const stats = {
-    total: newsPosts.length,
-    conquistas: newsPosts.filter(p => p.category === 'Conquista').length,
-    alertas: newsPosts.filter(p => p.category === 'Alerta').length,
+    total: posts.length,
+    conquistas: posts.filter(p => p.category === 'Conquista').length,
+    alertas: posts.filter(p => p.category === 'Alerta').length,
+    totalLikes: posts.reduce((s, p) => s + p.likes, 0),
   }
 
   return (
     <div className="p-8">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Newsletter Interna</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Newsletter Interna</h1>
           <p className="mt-1 text-sm text-muted-foreground">Atualizações, conquistas e comunicados da equipe</p>
         </div>
-        <Button className="gap-2" onClick={() => setComposing(c => !c)}>
-          <Plus className="h-4 w-4" />
-          Nova Publicação
+        <Button className="gap-2" onClick={openNew}>
+          <Plus className="h-4 w-4" /> Nova Publicação
         </Button>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
         {/* Main Feed */}
         <div className="col-span-2 space-y-4">
-          {/* Compose Box */}
-          {composing && (
-            <Card className="border-primary/40 bg-primary/5">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-xs font-bold text-white">
-                    FB
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    <textarea
-                      value={draft}
-                      onChange={e => setDraft(e.target.value)}
-                      placeholder="Compartilhe uma atualização com a equipe..."
-                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[100px]"
-                    />
-                    <div className="flex items-center gap-2">
-                      <Select defaultValue="Atualização">
-                        <SelectTrigger className="w-36 h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.keys(categoryConfig).map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <div className="ml-auto flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => { setComposing(false); setDraft('') }}>
-                          Cancelar
-                        </Button>
-                        <Button size="sm" className="gap-1.5" disabled={!draft.trim()}>
-                          <Send className="h-3.5 w-3.5" />
-                          Publicar
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Filter Bar */}
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -175,9 +133,7 @@ export function Newsletter() {
                   onClick={() => setFilter(cat)}
                   className={cn(
                     'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                    filter === cat
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground'
+                    filter === cat ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground'
                   )}
                 >
                   {cat === 'all' ? 'Todos' : cat}
@@ -186,14 +142,30 @@ export function Newsletter() {
             </div>
           </div>
 
-          {/* Posts */}
+          {loading && (
+            <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" /> Carregando posts...
+            </div>
+          )}
+
+          {!loading && filtered.length === 0 && (
+            <Card className="border-dashed border-border/50">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-sm font-medium text-muted-foreground">Nenhuma publicação encontrada</p>
+                <Button size="sm" onClick={openNew} className="mt-4 gap-1.5"><Plus className="h-3.5 w-3.5" />Criar primeira publicação</Button>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="space-y-3">
             {filtered.map(post => (
               <PostCard
                 key={post.id}
                 post={post}
-                liked={!!liked[post.id]}
-                onLike={() => toggleLike(post.id)}
+                onLike={() => likePost(post.id, post.likes)}
+                onEdit={() => openEdit(post)}
+                onDelete={() => setDeleteTarget(post)}
+                onTogglePin={() => togglePin(post.id, post.pinned)}
               />
             ))}
           </div>
@@ -201,16 +173,15 @@ export function Newsletter() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Stats */}
           <Card className="border-border/50">
             <CardContent className="p-5">
-              <p className="text-sm font-semibold text-foreground mb-4">Resumo da Semana</p>
+              <p className="text-sm font-semibold mb-4">Resumo da Semana</p>
               <div className="space-y-3">
                 {[
                   { label: 'Publicações', value: stats.total, color: 'text-indigo-400' },
                   { label: 'Conquistas', value: stats.conquistas, color: 'text-emerald-400' },
                   { label: 'Alertas', value: stats.alertas, color: 'text-amber-400' },
-                  { label: 'Engajamento', value: `${newsPosts.reduce((s, p) => s + p.likes, 0)} ❤️`, color: 'text-rose-400' },
+                  { label: 'Engajamento', value: `${stats.totalLikes} ❤️`, color: 'text-rose-400' },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">{item.label}</span>
@@ -221,43 +192,65 @@ export function Newsletter() {
             </CardContent>
           </Card>
 
-          {/* Active Team */}
-          <Card className="border-border/50">
-            <CardContent className="p-5">
-              <p className="text-sm font-semibold text-foreground mb-4">Mais Ativos</p>
-              <div className="space-y-3">
-                {[
-                  { name: 'Felipe Barros', role: 'CEO', initials: 'FB', color: 'bg-indigo-500', posts: 2 },
-                  { name: 'Thiago Rocha', role: 'Head CS', initials: 'TR', color: 'bg-amber-500', posts: 1 },
-                  { name: 'Marina Costa', role: 'COO', initials: 'MC', color: 'bg-emerald-500', posts: 1 },
-                  { name: 'Larissa Nunes', role: 'Marketing', initials: 'LN', color: 'bg-purple-500', posts: 1 },
-                ].map(member => (
-                  <div key={member.name} className="flex items-center gap-2.5">
-                    <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white', member.color)}>
-                      {member.initials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">{member.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{member.role}</p>
-                    </div>
-                    <Badge variant="secondary" className="text-[10px] px-1.5">{member.posts}x</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Search */}
-          <Card className="border-border/50">
-            <CardContent className="p-5">
-              <p className="text-sm font-semibold text-foreground mb-3">Buscar Publicações</p>
-              <div className="relative">
-                <Input placeholder="Pesquisar..." className="text-sm h-8" />
-              </div>
-            </CardContent>
-          </Card>
+          {/* Top authors */}
+          {posts.length > 0 && (
+            <Card className="border-border/50">
+              <CardContent className="p-5">
+                <p className="text-sm font-semibold mb-4">Autores</p>
+                <div className="space-y-3">
+                  {Object.values(
+                    posts.reduce<Record<string, { name: string; role: string; initials: string; color: string; count: number }>>((acc, p) => {
+                      if (!acc[p.author]) acc[p.author] = { name: p.author, role: p.author_role, initials: p.author_initials, color: p.author_color, count: 0 }
+                      acc[p.author].count++
+                      return acc
+                    }, {})
+                  )
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5)
+                    .map(m => (
+                      <div key={m.name} className="flex items-center gap-2.5">
+                        <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white', m.color)}>
+                          {m.initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{m.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{m.role}</p>
+                        </div>
+                        <Badge variant="secondary" className="text-[10px] px-1.5">{m.count}x</Badge>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
+
+      {/* Create / Edit Dialog */}
+      <PostDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initial={editing}
+        onSave={data => editing ? updatePost(editing.id, data) : createPost(data)}
+      />
+
+      {/* Delete Confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={o => !o && setDeleteTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Excluir publicação?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Excluir o post de <span className="font-semibold text-foreground">{deleteTarget?.author}</span>? Esta ação não pode ser desfeita.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>
+              {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Excluindo...</> : 'Sim, excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
