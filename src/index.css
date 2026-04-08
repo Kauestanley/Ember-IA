@@ -4,33 +4,31 @@
 
 @layer base {
   :root {
-    --background: 238 33% 5.5%;
-    --foreground: 220 20% 94%;
-    --card: 236 28% 8.5%;
-    --card-foreground: 220 20% 94%;
-    --popover: 236 28% 8.5%;
-    --popover-foreground: 220 20% 94%;
-    --primary: 239 84% 67%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 0 84% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 234 22% 13%;
-    --secondary-foreground: 220 20% 94%;
-    --muted: 234 22% 13%;
-    --muted-foreground: 220 12% 44%;
-    --accent: 234 22% 15%;
-    --accent-foreground: 220 20% 94%;
-    --destructive: 0 72% 51%;
+    --secondary: 0 0% 13%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 234 22% 12%;
-    --input: 234 22% 13%;
-    --ring: 239 84% 67%;
+    --border: 0 0% 12%;
+    --input: 0 0% 13%;
+    --ring: 0 84% 60%;
     --radius: 0.875rem;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -45,7 +43,7 @@
   .scrollbar-thin::-webkit-scrollbar { width: 3px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.08);
     border-radius: 2px;
   }
 }
