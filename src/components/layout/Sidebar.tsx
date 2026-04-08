@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Users,
   Target,
@@ -8,9 +8,12 @@ import {
   BarChart3,
   Settings,
   Bell,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navItems = [
   { to: '/clientes', icon: Users, label: 'Clientes' },
@@ -20,6 +23,20 @@ const navItems = [
 ]
 
 export function Sidebar() {
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await signOut()
+    navigate('/login', { replace: true })
+  }
+
+  const initials = user?.email
+    ? user.email.slice(0, 2).toUpperCase()
+    : '??'
+
+  const displayEmail = user?.email ?? ''
+
   return (
     <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-card">
       {/* Logo */}
@@ -99,17 +116,25 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      {/* User Profile */}
+      {/* User Profile + Logout */}
       <div className="border-t border-border p-4">
         <div className="flex items-center gap-3 rounded-lg px-2 py-2">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-xs font-bold text-white">
-            FB
+            {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-foreground">Felipe Barros</p>
-            <p className="truncate text-xs text-muted-foreground">CEO & Founder</p>
+            <p className="truncate text-sm font-medium text-foreground">{displayEmail}</p>
+            <p className="truncate text-xs text-muted-foreground">Membro da equipe</p>
           </div>
-          <div className="h-2 w-2 rounded-full bg-emerald-400" title="Online" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+            title="Sair"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </aside>
