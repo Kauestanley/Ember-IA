@@ -1,54 +1,96 @@
-import { Bell, Search, ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Bell, Search, Settings, ChevronDown, UserPlus } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLocation } from 'react-router-dom'
+import { useState } from 'react'
+
+// Map routes to action buttons context
+const pageActions: Record<string, { label: string; to: string } | null> = {
+  '/clientes':   { label: 'Novo Cliente', to: '/clientes' },
+  '/okrs':       { label: 'Novo OKR', to: '/okrs' },
+  '/newsletter': { label: 'Nova Publicação', to: '/newsletter' },
+  '/vendas':     null,
+}
 
 export function Header() {
   const { user } = useAuth()
+  const { pathname } = useLocation()
+  const [search, setSearch] = useState('')
 
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : '??'
   const displayName = user?.email?.split('@')[0] ?? 'Usuário'
 
   return (
-    <header className="fixed top-0 left-64 right-0 z-40 flex h-16 items-center justify-between border-b border-white/[0.06] bg-[hsl(224,71%,4%)]/90 px-8 backdrop-blur-md">
-      {/* Left: live pulse */}
-      <div className="flex items-center gap-2">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-        </span>
-        <span className="text-xs text-muted-foreground font-medium">Sistema operacional</span>
-      </div>
-
-      {/* Right: actions + avatar */}
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
+    <header
+      className="fixed top-0 left-[220px] right-0 z-40 flex h-14 items-center justify-between px-6"
+      style={{
+        background: 'rgba(13,13,23,0.85)',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      }}
+    >
+      {/* Left: User pill */}
+      <button className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 transition-colors hover:bg-white/[0.06]">
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-white"
+          style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)' }}
         >
-          <Search className="h-4 w-4" />
-        </Button>
+          {initials}
+        </div>
+        <div className="text-left">
+          <p className="text-[13px] font-semibold text-white/90 leading-none capitalize">{displayName}</p>
+        </div>
+        <ChevronDown className="h-3.5 w-3.5 text-white/30 ml-0.5" />
+      </button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.06]"
+      {/* Center: action button */}
+      {pageActions[pathname] && (
+        <button
+          className="flex items-center gap-2 rounded-full px-4 py-1.5 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)', boxShadow: '0 4px 18px rgba(99,102,241,0.4)' }}
+        >
+          <UserPlus className="h-3.5 w-3.5" />
+          {pageActions[pathname]!.label}
+        </button>
+      )}
+
+      {/* Right: search + icons */}
+      <div className="flex items-center gap-2">
+        {/* Search pill */}
+        <div className="relative flex items-center">
+          <Search className="absolute left-3 h-3.5 w-3.5 pointer-events-none" style={{ color: 'rgba(255,255,255,0.25)' }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar..."
+            className="rounded-full pl-8 pr-4 py-1.5 text-[12px] outline-none transition-colors w-40 focus:w-56"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.8)',
+              transition: 'width 0.2s ease',
+            }}
+          />
+        </div>
+
+        {/* Bell */}
+        <button
+          className="relative flex h-8 w-8 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.06]"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
         >
           <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-indigo-500 ring-2 ring-[hsl(224,71%,4%)]" />
-        </Button>
+          <span
+            className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-indigo-500"
+            style={{ boxShadow: '0 0 0 2px #0d0d17' }}
+          />
+        </button>
 
-        <div className="ml-2 h-5 w-px bg-white/[0.08]" />
-
-        <button className="ml-2 flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-white/[0.06] transition-colors">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-[11px] font-bold text-white shadow-lg shadow-indigo-500/30">
-            {initials}
-          </div>
-          <div className="text-left hidden sm:block">
-            <p className="text-xs font-medium text-foreground leading-none mb-0.5 capitalize">{displayName}</p>
-            <p className="text-[10px] text-muted-foreground leading-none">Admin</p>
-          </div>
-          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        {/* Settings */}
+        <button
+          className="flex h-8 w-8 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.06]"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+        >
+          <Settings className="h-4 w-4" />
         </button>
       </div>
     </header>
