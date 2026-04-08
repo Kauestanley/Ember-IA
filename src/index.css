@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 6%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 6%;
-    --popover-foreground: 210 20% 98%;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 222 47% 5.5%;
+    --card-foreground: 213 31% 91%;
+    --popover: 222 47% 5.5%;
+    --popover-foreground: 213 31% 91%;
     --primary: 239 84% 67%;
     --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 50.6%;
+    --secondary: 215 28% 12%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 215 28% 12%;
+    --muted-foreground: 215 20% 50%;
+    --accent: 215 28% 14%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
+    --border: 215 28% 11%;
+    --input: 215 28% 12%;
     --ring: 239 84% 67%;
     --radius: 0.75rem;
   }
@@ -40,7 +40,7 @@
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: hsl(215 27.9% 20%) transparent;
+    scrollbar-color: rgba(255,255,255,0.06) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 4px;
@@ -50,7 +50,18 @@
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(215 27.9% 20%);
+    background: rgba(255,255,255,0.07);
     border-radius: 2px;
+  }
+
+  .card-glow {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  .number-gradient {
+    background: linear-gradient(135deg, #fff 40%, rgba(255,255,255,0.5));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
