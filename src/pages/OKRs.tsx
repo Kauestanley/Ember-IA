@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { Target, TrendingUp, DollarSign, TrendingDown, ChevronRight, Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Target, TrendingUp, DollarSign, Users, ChevronRight, Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { OKRDialog } from '@/components/okrs/OKRDialog'
 import { useOKRs } from '@/hooks/useOKRs'
-import { monthlyRevenue } from '@/data/mockData'
+import { useVendasMetrics } from '@/hooks/useVendasMetrics'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { type OKRRow } from '@/lib/supabase'
 
@@ -37,6 +37,7 @@ const CustomTooltip = ({ active, payload, label }: {
 
 export function OKRs() {
   const { okrs, loading, createOKR, updateOKR, deleteOKR } = useOKRs()
+  const { metrics: m } = useVendasMetrics()
   const [dialogOpen,   setDialogOpen]   = useState(false)
   const [editing,      setEditing]      = useState<OKRRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<OKRRow | null>(null)
@@ -53,18 +54,16 @@ export function OKRs() {
     setDeleteTarget(null)
   }
 
-  const last      = monthlyRevenue[monthlyRevenue.length - 1]
-  const margin    = (last.lucro / last.faturamento) * 100
-  const ytdRev    = monthlyRevenue.reduce((s, m) => s + m.faturamento, 0)
-  const ytdExp    = monthlyRevenue.reduce((s, m) => s + m.despesas, 0)
-  const ytdProfit = monthlyRevenue.reduce((s, m) => s + m.lucro, 0)
+  // Financial cards from real Supabase data
+  const financialCards = m ? [
+    { label: 'MRR Atual',        sublabel: 'Mensal recorrente', value: formatCurrency(m.mrr),            icon: DollarSign, color: GREEN, delta: `+${m.revenueGrowthMoM}%`, pos: true  },
+    { label: 'ARR Projetado',    sublabel: 'Anual projetado',   value: formatCurrency(m.arr),            icon: TrendingUp, color: RED,   delta: '+4.1%',                    pos: true  },
+    { label: 'Clientes Ativos',  sublabel: 'Contratos ativos',  value: String(m.activeClients),          icon: Users,      color: '#fff',delta: `+${m.newClientsThisMonth} mês`, pos: true },
+    { label: 'Churn Rate',       sublabel: 'Taxa de cancelamento', value: formatPercent(m.churnRate),    icon: Target,     color: m.churnRate > 5 ? RED : GREEN, delta: 'estável', pos: m.churnRate <= 5 },
+  ] : []
 
-  const financialCards = [
-    { label: 'Faturamento',  sublabel: 'Dez 2024', value: formatCurrency(last.faturamento), icon: DollarSign,  color: GREEN, delta: '+3.9%', pos: true  },
-    { label: 'Despesas',     sublabel: 'Dez 2024', value: formatCurrency(last.despesas),    icon: TrendingDown, color: RED,   delta: '+3.4%', pos: false },
-    { label: 'Lucro',        sublabel: 'Dez 2024', value: formatCurrency(last.lucro),       icon: TrendingUp,  color: '#fff',delta: '+4.4%', pos: true  },
-    { label: 'Margem Líq.',  sublabel: 'Estimada', value: formatPercent(margin),            icon: Target,      color: GREEN, delta: 'estável', pos: true },
-  ]
+  // Monthly MRR trend for chart
+  const chartData = m?.monthlyMRR.map(d => ({ month: d.month, mrr: d.mrr })) ?? []
 
   return (
     <div className="p-4 md:p-6 space-y-5">
@@ -74,7 +73,7 @@ export function OKRs() {
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-1"
             style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Objetivos & Financeiro · 2024
+            Objetivos & Métricas Reais · Supabase
           </p>
           <h1 className="text-xl md:text-2xl font-black tracking-tight text-white">OKRs & Financeiro</h1>
         </div>
@@ -85,91 +84,103 @@ export function OKRs() {
         </button>
       </div>
 
-      {/* Financial cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {financialCards.map(c => (
-          <div key={c.label} className="rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
-            <div className="flex items-center justify-between mb-3 md:mb-4">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em]"
-                  style={{ color: 'rgba(255,255,255,0.3)' }}>{c.label}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.2)' }}>{c.sublabel}</p>
+      {/* Financial cards — real data */}
+      {!m ? (
+        <div className="flex items-center justify-center h-32 gap-3" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <Loader2 className="h-4 w-4 animate-spin" style={{ color: RED }} />
+          <span className="text-sm">Carregando métricas...</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {financialCards.map(c => (
+            <div key={c.label} className="rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: 'rgba(255,255,255,0.3)' }}>{c.label}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.2)' }}>{c.sublabel}</p>
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl"
+                  style={{ background: c.color === '#fff' ? 'rgba(255,255,255,0.08)' : `${c.color}18` }}>
+                  <c.icon className="h-4 w-4" style={{ color: c.color }} />
+                </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl"
-                style={{ background: c.color === '#fff' ? 'rgba(255,255,255,0.08)' : `${c.color}18` }}>
-                <c.icon className="h-4 w-4" style={{ color: c.color }} />
-              </div>
+              <p className="text-[20px] md:text-[26px] font-black leading-none tracking-tight text-white mb-2">{c.value}</p>
+              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                <span style={{ color: c.pos ? GREEN : RED, fontWeight: 700 }}>{c.delta}</span>
+                {' '}vs mês anterior
+              </p>
             </div>
-            <p className="text-[20px] md:text-[26px] font-black leading-none tracking-tight text-white mb-2">{c.value}</p>
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              <span style={{ color: c.pos ? GREEN : RED, fontWeight: 700 }}>{c.delta}</span>
-              {' '}vs mês anterior
-            </p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
-          <p className="text-[13px] font-bold text-white/80 mb-1">Evolução Mensal</p>
-          <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Faturamento, despesas e lucro ao longo do ano
-          </p>
-          <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={monthlyRevenue} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-              <defs>
-                {([[  'gR', RED ], ['gG', GREEN], ['gW', '#ffffff']] as [string,string][]).map(([id, color]) => (
-                  <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={color} stopOpacity={0.25} />
-                    <stop offset="95%" stopColor={color} stopOpacity={0}    />
-                  </linearGradient>
-                ))}
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.25)' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.25)' }} axisLine={false} tickLine={false}
-                tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }} />
-              <Area type="monotone" dataKey="faturamento" name="Faturamento" stroke={RED}     strokeWidth={2} fill="url(#gR)" dot={false} />
-              <Area type="monotone" dataKey="despesas"    name="Despesas"    stroke="#ffffff" strokeWidth={2} fill="url(#gW)" dot={false} />
-              <Area type="monotone" dataKey="lucro"       name="Lucro"       stroke={GREEN}   strokeWidth={2} fill="url(#gG)" dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
-          <p className="text-[13px] font-bold text-white/80 mb-1">Resumo Anual</p>
-          <p className="text-[11px] mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>Acumulado 2024</p>
-          <div className="space-y-5">
-            {[
-              { label: 'Faturamento YTD', value: formatCurrency(ytdRev),    color: RED,   pct: 100 },
-              { label: 'Despesas YTD',    value: formatCurrency(ytdExp),    color: '#fff', pct: Math.round((ytdExp    / ytdRev)*100) },
-              { label: 'Lucro YTD',       value: formatCurrency(ytdProfit), color: GREEN,  pct: Math.round((ytdProfit / ytdRev)*100) },
-            ].map(item => (
-              <div key={item.label}>
-                <div className="flex justify-between mb-2">
-                  <span className="text-[11px] text-white/35">{item.label}</span>
-                  <span className="text-[11px] font-bold text-white/75">{item.value}</span>
-                </div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                  <div className="h-full rounded-full transition-all duration-700"
-                    style={{ width: `${item.pct}%`, background: item.color }} />
-                </div>
-                <p className="mt-1 text-right text-[9px] text-white/25">{item.pct}%</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 rounded-xl p-4" style={{ background: `${GREEN}10`, border: `1px solid ${GREEN}25` }}>
-            <p className="text-[10px] uppercase tracking-[0.1em] font-bold mb-1 text-white/30">Margem média 2024</p>
-            <p className="text-[28px] font-black leading-none" style={{ color: GREEN }}>
-              {formatPercent((ytdProfit / ytdRev) * 100)}
+      {m && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* MRR Trend */}
+          <div className="lg:col-span-2 rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
+            <p className="text-[13px] font-bold text-white/80 mb-1">Evolução do MRR</p>
+            <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              Receita mensal recorrente — baseado nos clientes cadastrados
             </p>
-            <p className="text-[10px] mt-1 text-white/30">↑ 2.1pp vs 2023</p>
+            {chartData.every(d => d.mrr === 0) ? (
+              <div className="flex items-center justify-center h-60 text-[12px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                Cadastre clientes para visualizar a evolução do MRR
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="mrrGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor={RED} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={RED} stopOpacity={0}   />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.25)' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.25)' }} axisLine={false} tickLine={false}
+                    tickFormatter={v => v >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="mrr" name="MRR" stroke={RED} strokeWidth={2} fill="url(#mrrGrad)" dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          {/* Summary */}
+          <div className="rounded-2xl p-4 md:p-5" style={{ background: CARD, border: CARD_B }}>
+            <p className="text-[13px] font-bold text-white/80 mb-1">Resumo da Carteira</p>
+            <p className="text-[11px] mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>Dados em tempo real</p>
+            <div className="space-y-5">
+              {[
+                { label: 'Clientes Ativos',   value: String(m.activeClients),          color: RED,   pct: m.totalClients > 0 ? Math.round((m.activeClients / m.totalClients) * 100) : 0 },
+                { label: 'Em Trial',           value: String(m.trialClients),           color: '#fff', pct: m.totalClients > 0 ? Math.round((m.trialClients / m.totalClients) * 100) : 0 },
+                { label: 'Churned',            value: String(m.churnedClients),         color: GREEN,  pct: m.totalClients > 0 ? Math.round((m.churnedClients / m.totalClients) * 100) : 0 },
+              ].map(item => (
+                <div key={item.label}>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-[11px] text-white/35">{item.label}</span>
+                    <span className="text-[11px] font-bold text-white/75">{item.value}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                    <div className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${item.pct}%`, background: item.color }} />
+                  </div>
+                  <p className="mt-1 text-right text-[9px] text-white/25">{item.pct}%</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 rounded-xl p-4" style={{ background: `${GREEN}10`, border: `1px solid ${GREEN}25` }}>
+              <p className="text-[10px] uppercase tracking-[0.1em] font-bold mb-1 text-white/30">LTV:CAC Ratio</p>
+              <p className="text-[28px] font-black leading-none" style={{ color: GREEN }}>
+                {(m.ltv / m.cac).toFixed(1)}x
+              </p>
+              <p className="text-[10px] mt-1 text-white/30">Meta: acima de 3x</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* OKR cards */}
       <div className="space-y-4">

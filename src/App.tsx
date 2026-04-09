@@ -8,6 +8,9 @@ import { Clientes } from '@/pages/Clientes'
 import { OKRs } from '@/pages/OKRs'
 import { Newsletter } from '@/pages/Newsletter'
 import { Vendas } from '@/pages/Vendas'
+import { Notificacoes } from '@/pages/Notificacoes'
+import { Configuracoes } from '@/pages/Configuracoes'
+import { Relatorios } from '@/pages/Relatorios'
 
 export default function App() {
   return (
@@ -28,10 +31,13 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Layout />}>
               <Route index element={<Navigate to="/vendas" replace />} />
-              <Route path="clientes" element={<Clientes />} />
-              <Route path="okrs" element={<OKRs />} />
-              <Route path="newsletter" element={<Newsletter />} />
-              <Route path="vendas" element={<Vendas />} />
+              <Route path="vendas"       element={<Vendas />} />
+              <Route path="clientes"     element={<Clientes />} />
+              <Route path="okrs"         element={<OKRs />} />
+              <Route path="newsletter"   element={<Newsletter />} />
+              <Route path="notificacoes" element={<Notificacoes />} />
+              <Route path="configuracoes" element={<Configuracoes />} />
+              <Route path="relatorios"   element={<Relatorios />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/vendas" replace />} />

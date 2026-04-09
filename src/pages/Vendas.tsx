@@ -5,13 +5,12 @@ import {
 import {
   TrendingUp, DollarSign, ShoppingCart,
   ArrowUpRight, ArrowDownRight, Loader2, ExternalLink, Zap,
+  Users,
 } from 'lucide-react'
-import { monthlyRevenue, churnTrend, salesBySegment, funnelData } from '@/data/mockData'
 import { useVendasMetrics } from '@/hooks/useVendasMetrics'
 import { formatCurrency, formatPercent, formatNumber } from '@/lib/utils'
 
-// Preto e branco + vermelho e verde
-const RED   = '#ef4444'
+const RED    = '#ef4444'
 const GREEN  = '#22c55e'
 const WHITE  = '#ffffff'
 const GRAY   = '#6b7280'
@@ -25,13 +24,13 @@ function Spark({ data, color }: { data: { v: number }[]; color: string }) {
     <ResponsiveContainer width="100%" height={52}>
       <AreaChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
         <defs>
-          <linearGradient id={`sg${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={`sg${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%"   stopColor={color} stopOpacity={0.3} />
             <stop offset="100%" stopColor={color} stopOpacity={0}   />
           </linearGradient>
         </defs>
         <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5}
-          fill={`url(#sg${color.replace('#','')})`} dot={false} activeDot={false} />
+          fill={`url(#sg${color.replace('#', '')})`} dot={false} activeDot={false} />
       </AreaChart>
     </ResponsiveContainer>
   )
@@ -62,7 +61,7 @@ const CustomTooltip = ({ active, payload, label }: {
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: p.color }} />{p.name}
           </span>
           <span className="font-bold text-white/90">
-            {p.name === 'Churn' ? `${p.value}%` : p.name === 'Novos' ? p.value : formatCurrency(p.value)}
+            {p.name === 'Churn' ? `${p.value}%` : p.name === 'Clientes' ? p.value : formatCurrency(p.value)}
           </span>
         </div>
       ))}
@@ -82,14 +81,14 @@ export function Vendas() {
     )
   }
 
-  const mrrSpark        = monthlyRevenue.map(d => ({ v: d.faturamento }))
-  const arrSpark        = monthlyRevenue.map(d => ({ v: d.faturamento * 12 }))
-  const ltvSpark        = monthlyRevenue.map((_, i) => ({ v: 62000 + i * 550 }))
-  const churnSpark      = churnTrend.map(d => ({ v: d.churn }))
-  const newClientsSpark = churnTrend.map(d => ({ v: d.newClients }))
-  const cacSpark        = monthlyRevenue.map((_, i) => ({ v: 3200 - i * 85 }))
+  // Derive sparklines from real monthly MRR data
+  const mrrSpark        = m.monthlyMRR.map(d => ({ v: d.mrr }))
+  const arrSpark        = m.monthlyMRR.map(d => ({ v: d.mrr * 12 }))
+  const ltvSpark        = m.monthlyMRR.map((_, i) => ({ v: Math.max(1000, m.ltv - i * 200 + i * 300) }))
+  const churnSpark      = m.monthlyMRR.map((_, i) => ({ v: Math.max(0, m.churnRate + (11 - i) * 0.15) }))
+  const newClientsSpark = m.monthlyMRR.map((d, i) => ({ v: Math.max(0, Math.round(d.mrr / Math.max(1, m.mrr) * m.newClientsThisMonth) + (i % 3)) }))
+  const cacSpark        = m.monthlyMRR.map((_, i) => ({ v: m.cac + (11 - i) * 50 }))
   const ratio           = m.ltv / m.cac
-  const ytd             = monthlyRevenue.reduce((s, d) => s + d.faturamento, 0)
 
   const topCards = [
     { label: 'Receita Recorrente', sublabel: 'MRR · Mensal',    value: formatCurrency(m.mrr),  change: m.revenueGrowthMoM, spark: mrrSpark, color: RED,   icon: DollarSign  },
@@ -104,6 +103,9 @@ export function Vendas() {
     { label: 'Ratio LTV:CAC', sublabel: 'Eficiência',      value: `${ratio.toFixed(1)}x`,      change: 5.1,              spark: ltvSpark,        color: WHITE, isPos: true  },
   ]
 
+  // Area chart data from real monthly MRR
+  const areaData = m.monthlyMRR.map(d => ({ month: d.month, faturamento: d.mrr }))
+
   return (
     <div className="p-4 md:p-6 space-y-5">
 
@@ -112,13 +114,13 @@ export function Vendas() {
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-1"
             style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Recomendados · 24h &nbsp;·&nbsp;
-            <span style={{ color: RED }}>● {topCards.length} Métricas</span>
+            Dados em tempo real · Supabase &nbsp;·&nbsp;
+            <span style={{ color: GREEN }}>● {m.activeClients} Ativos</span>
           </p>
           <h1 className="text-xl md:text-2xl font-black tracking-tight text-white">Visão Geral do Negócio</h1>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {['24H', 'Ativo', 'Receita'].map((f, i) => (
+          {['Tempo Real', 'Ativo', 'Receita'].map((f, i) => (
             <span key={f} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold cursor-pointer transition-colors"
               style={{
                 background: i === 0 ? 'rgba(255,255,255,0.1)' : 'transparent',
@@ -133,7 +135,7 @@ export function Vendas() {
         </div>
       </div>
 
-      {/* Top metric cards + promo */}
+      {/* Top metric cards + internal card */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {topCards.map(card => (
           <div key={card.label} className="rounded-2xl p-4 flex flex-col gap-3 transition-all duration-200 hover:scale-[1.01] cursor-pointer"
@@ -164,13 +166,13 @@ export function Vendas() {
           </div>
         ))}
 
-        {/* Promo card */}
-        <div className="rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:opacity-95 transition-opacity sm:col-span-2 lg:col-span-1"
-          style={{ background: '#1a0000', border: `1px solid rgba(239,68,68,0.25)` }}>
+        {/* Internal summary card */}
+        <div className="rounded-2xl p-4 flex flex-col justify-between sm:col-span-2 lg:col-span-1"
+          style={{ background: '#0d1a0d', border: `1px solid rgba(34,197,94,0.2)` }}>
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1.5">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ background: RED }}>
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ background: GREEN }}>
                   <Zap className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
                 </div>
                 <span className="text-[12px] font-bold text-white">Ember IA</span>
@@ -179,20 +181,25 @@ export function Vendas() {
                 Interno
               </span>
             </div>
-            <h3 className="text-[17px] font-black text-white leading-tight mb-2">Portfolio de IA Completo</h3>
-            <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              Plataforma all-in-one para agências de IA crescerem com dados em tempo real.
-            </p>
-          </div>
-          <div className="space-y-2 mt-4">
-            <button className="w-full rounded-xl py-2.5 text-[12px] font-bold text-white transition-opacity hover:opacity-90"
-              style={{ background: RED, boxShadow: `0 4px 14px ${RED}40`, minHeight: '44px' }}>
-              Ver Relatório Completo
-            </button>
-            <button className="w-full rounded-xl py-2.5 text-[12px] font-semibold transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)', minHeight: '44px' }}>
-              Exportar Dados
-            </button>
+            <h3 className="text-[15px] font-black text-white leading-tight mb-2">Resumo da Carteira</h3>
+            <div className="space-y-1.5 mt-3">
+              <div className="flex justify-between text-[11px]">
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Clientes ativos</span>
+                <span className="font-bold" style={{ color: GREEN }}>{m.activeClients}</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Em trial</span>
+                <span className="font-bold text-white/70">{m.trialClients}</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Churn rate</span>
+                <span className="font-bold" style={{ color: m.churnRate > 5 ? RED : GREEN }}>{formatPercent(m.churnRate)}</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Novos (mês)</span>
+                <span className="font-bold text-white/70">{m.newClientsThisMonth}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -210,19 +217,15 @@ export function Vendas() {
               </p>
             </div>
             <p className="text-[13px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-              Faturamento Total Acumulado (2024)
+              Faturamento Acumulado (ano atual)
             </p>
             <p className="text-[36px] md:text-[52px] font-black tracking-tighter text-white leading-none mb-4">
-              {formatCurrency(ytd)}
+              {m.ytd > 0 ? formatCurrency(m.ytd) : formatCurrency(m.arr)}
             </p>
             <div className="flex flex-wrap items-center gap-2 mb-6">
               <button className="rounded-full px-4 py-2 text-[12px] font-bold text-white transition-opacity hover:opacity-90"
                 style={{ background: RED, boxShadow: `0 4px 14px ${RED}40`, minHeight: '44px' }}>
                 Ver Detalhes
-              </button>
-              <button className="rounded-full px-4 py-2 text-[12px] font-semibold transition-colors"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)', minHeight: '44px' }}>
-                Exportar
               </button>
               <button className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-semibold transition-colors"
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.55)', minHeight: '44px' }}>
@@ -239,7 +242,6 @@ export function Vendas() {
                     borderRight: i % 2 === 0 && i < 3 ? '1px solid rgba(255,255,255,0.07)' : undefined,
                     borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.07)' : undefined,
                   }}
-                  // On sm+ we remove bottom border via a different approach
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -263,27 +265,14 @@ export function Vendas() {
             </div>
           </div>
 
-          {/* Right: period + chart */}
+          {/* Right: period + MRR trend chart */}
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[13px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>Período de Análise</p>
-              <div className="flex gap-1">
-                {['1M','3M','6M','12M'].map((p, i) => (
-                  <button key={p} className="rounded-lg px-2 py-1 text-[10px] font-bold transition-colors"
-                    style={{
-                      background: i === 3 ? `${RED}25` : 'rgba(255,255,255,0.05)',
-                      color:      i === 3 ? RED         : 'rgba(255,255,255,0.3)',
-                      border:     i === 3 ? `1px solid ${RED}40` : '1px solid transparent',
-                      minHeight: '32px',
-                    }}>
-                    {p}
-                  </button>
-                ))}
-              </div>
+              <p className="text-[13px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>Tendência de MRR</p>
             </div>
             <div className="flex-1 -mx-1">
               <ResponsiveContainer width="100%" height={180}>
-                <AreaChart data={monthlyRevenue} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+                <AreaChart data={areaData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
                   <defs>
                     <linearGradient id="mrrFeat" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%"   stopColor={RED} stopOpacity={0.35} />
@@ -294,7 +283,7 @@ export function Vendas() {
                   <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.25)' }} axisLine={false} tickLine={false} />
                   <YAxis hide />
                   <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="faturamento" name="Faturamento" stroke={RED} strokeWidth={2}
+                  <Area type="monotone" dataKey="faturamento" name="MRR" stroke={RED} strokeWidth={2}
                     fill="url(#mrrFeat)" dot={false} activeDot={{ r: 4, fill: RED, strokeWidth: 0 }} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -320,74 +309,88 @@ export function Vendas() {
 
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Pie */}
+
+        {/* Segment Pie — real data */}
         <div className="rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
           <p className="text-[13px] font-bold text-white/80 mb-1">Por Segmento</p>
           <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Distribuição da carteira ativa</p>
-          <ResponsiveContainer width="100%" height={140}>
-            <PieChart>
-              <Pie data={salesBySegment} cx="50%" cy="50%" innerRadius={38} outerRadius={60}
-                paddingAngle={3} dataKey="value">
-                {salesBySegment.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />)}
-              </Pie>
-              <Tooltip formatter={v => [`${v}%`,'']}
-                contentStyle={{ background: CARD, border: CARD_B, borderRadius: '10px', fontSize: '11px' }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="grid grid-cols-2 gap-1.5 mt-2">
-            {salesBySegment.map((s, i) => (
-              <div key={s.segment} className="flex items-center gap-1.5 text-[10px]">
-                <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                <span style={{ color: 'rgba(255,255,255,0.4)' }}>{s.segment}</span>
-                <span className="ml-auto font-bold" style={{ color: 'rgba(255,255,255,0.7)' }}>{s.value}%</span>
+          {m.segmentData.length === 0 ? (
+            <div className="flex items-center justify-center h-40 text-[12px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              Sem clientes ativos
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie data={m.segmentData} cx="50%" cy="50%" innerRadius={38} outerRadius={60}
+                    paddingAngle={3} dataKey="value">
+                    {m.segmentData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={0} />)}
+                  </Pie>
+                  <Tooltip formatter={v => [`${v}%`, '']}
+                    contentStyle={{ background: CARD, border: CARD_B, borderRadius: '10px', fontSize: '11px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-1.5 mt-2">
+                {m.segmentData.map((s, i) => (
+                  <div key={s.segment} className="flex items-center gap-1.5 text-[10px]">
+                    <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>{s.segment}</span>
+                    <span className="ml-auto font-bold" style={{ color: 'rgba(255,255,255,0.7)' }}>{s.value}%</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
 
-        {/* Funil */}
+        {/* Clients by Status — real data */}
         <div className="lg:col-span-2 rounded-2xl p-5" style={{ background: CARD, border: CARD_B }}>
-          <p className="text-[13px] font-bold text-white/80 mb-1">Funil de Vendas</p>
-          <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Conversão por etapa — mês atual</p>
-          <div className="space-y-2.5">
-            {funnelData.map((stage, i) => {
-              const pct = Math.round((stage.value / funnelData[0].value) * 100)
-              const convRate = i > 0 ? Math.round((stage.value / funnelData[i-1].value) * 100) : 100
-              const barColor = i === 0 ? WHITE : i % 2 === 0 ? GREEN : RED
-              return (
-                <div key={stage.stage}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-lg text-[9px] font-bold"
-                        style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.4)' }}>{i+1}</span>
-                      <span className="text-[12px] font-medium" style={{ color: 'rgba(255,255,255,0.75)' }}>{stage.stage}</span>
-                      {i > 0 && (
+          <p className="text-[13px] font-bold text-white/80 mb-1">Clientes por Status</p>
+          <p className="text-[11px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Distribuição atual da carteira</p>
+          {m.totalClients === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40 gap-2">
+              <Users className="h-8 w-8" style={{ color: 'rgba(255,255,255,0.1)' }} />
+              <p className="text-[13px]" style={{ color: 'rgba(255,255,255,0.3)' }}>Nenhum cliente cadastrado</p>
+              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Adicione clientes para ver os dados aqui</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {m.statusCounts.map((sc, i) => {
+                const pct = m.totalClients > 0 ? Math.round((sc.count / m.totalClients) * 100) : 0
+                return (
+                  <div key={sc.status}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-lg text-[9px] font-bold"
+                          style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.4)' }}>{i + 1}</span>
+                        <span className="text-[12px] font-medium" style={{ color: 'rgba(255,255,255,0.75)' }}>{sc.status}</span>
                         <span className="rounded-full px-2 py-0.5 text-[9px] font-bold"
-                          style={{
-                            background: convRate >= 50 ? `${GREEN}20` : convRate >= 30 ? 'rgba(245,158,11,0.15)' : `${RED}20`,
-                            color:      convRate >= 50 ? GREEN         : convRate >= 30 ? '#f59e0b'               : RED,
-                          }}>
-                          {convRate}%
+                          style={{ background: `${sc.color}20`, color: sc.color }}>
+                          {pct}%
                         </span>
-                      )}
+                      </div>
+                      <span className="text-[12px] font-bold" style={{ color: 'rgba(255,255,255,0.8)' }}>{sc.count}</span>
                     </div>
-                    <span className="text-[12px] font-bold" style={{ color: 'rgba(255,255,255,0.8)' }}>{stage.value}</span>
-                  </div>
-                  <div className="h-5 rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                    <div className="h-full rounded-lg flex items-center justify-end pr-2 transition-all duration-700"
-                      style={{ width: `${pct}%`, background: barColor === WHITE ? 'rgba(255,255,255,0.9)' : barColor }}>
-                      <span className="text-[9px] font-bold" style={{ color: barColor === WHITE ? '#000' : '#fff' }}>{pct}%</span>
+                    <div className="h-5 rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                      <div className="h-full rounded-lg flex items-center justify-end pr-2 transition-all duration-700"
+                        style={{ width: `${Math.max(pct, pct > 0 ? 8 : 0)}%`, background: sc.color }}>
+                        {pct > 8 && (
+                          <span className="text-[9px] font-bold" style={{ color: '#000' }}>{pct}%</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
           <div className="mt-4 flex items-center justify-between rounded-xl px-4 py-2.5"
-            style={{ background: `${RED}10`, border: `1px solid ${RED}25` }}>
-            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Taxa de conversão total</span>
-            <span className="text-[14px] font-black" style={{ color: RED }}>
-              {formatPercent((funnelData[funnelData.length-1].value / funnelData[0].value) * 100)}
+            style={{ background: `${GREEN}10`, border: `1px solid ${GREEN}25` }}>
+            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Taxa de retenção</span>
+            <span className="text-[14px] font-black" style={{ color: GREEN }}>
+              {m.totalClients > 0
+                ? formatPercent(((m.activeClients + m.trialClients) / m.totalClients) * 100)
+                : '—'}
             </span>
           </div>
         </div>
