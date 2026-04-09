@@ -2,6 +2,8 @@ import { Bell, Search, Settings, ChevronDown, UserPlus, Menu } from 'lucide-reac
 import { useAuth } from '@/contexts/AuthContext'
 import { useLocation } from 'react-router-dom'
 import { useState } from 'react'
+import { useNotifications } from '@/hooks/useNotifications'
+import { NotificationsPanel } from '@/components/notifications/NotificationsPanel'
 
 const pageActions: Record<string, string | null> = {
   '/clientes':   'Novo Cliente',
@@ -19,6 +21,17 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { pathname } = useLocation()
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [notifOpen, setNotifOpen]   = useState(false)
+
+  const {
+    notifications,
+    loading: notifLoading,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+  } = useNotifications()
 
   const initials    = user?.email ? user.email.slice(0, 2).toUpperCase() : '??'
   const displayName = user?.email?.split('@')[0] ?? 'Usuário'
@@ -71,7 +84,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       )}
 
       {/* Right: search + icons */}
-      <div className="flex items-center gap-1.5">
+      <div className="relative flex items-center gap-1.5">
         {/* Search — expandable on mobile, full on desktop */}
         <div className="relative flex items-center">
           {/* Mobile: icon-only button that expands */}
@@ -128,12 +141,25 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
         )}
 
+        {/* Notifications bell */}
         <button
+          onClick={() => setNotifOpen(o => !o)}
           className="relative flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-white/[0.06]"
-          style={{ color: 'rgba(255,255,255,0.4)' }}
+          style={{ color: notifOpen ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)' }}
+          aria-label="Notificações"
         >
           <Bell className="h-4 w-4" />
-          <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" style={{ boxShadow: '0 0 0 2px #0a0a0a' }} />
+          {unreadCount > 0 && (
+            <span
+              className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white"
+              style={{ background: '#ef4444', boxShadow: '0 0 0 2px #0a0a0a', fontSize: unreadCount > 9 ? '7px' : '8px' }}
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+          {unreadCount === 0 && (
+            <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-white/20" />
+          )}
         </button>
 
         <button
@@ -142,6 +168,19 @@ export function Header({ onMenuClick }: HeaderProps) {
         >
           <Settings className="h-4 w-4" />
         </button>
+
+        {/* Notifications Panel (absolute, anchored to right edge) */}
+        <NotificationsPanel
+          open={notifOpen}
+          onClose={() => setNotifOpen(false)}
+          notifications={notifications}
+          loading={notifLoading}
+          unreadCount={unreadCount}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          onDelete={deleteNotification}
+          onClearAll={clearAll}
+        />
       </div>
     </header>
   )

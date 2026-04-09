@@ -11,6 +11,10 @@ export interface OKRFormData {
   key_results: KRFormData[]
 }
 
+async function notify(title: string, message: string, type: 'success' | 'info' | 'warning' | 'error') {
+  await supabase.from('notifications').insert([{ title, message, type, read: false }])
+}
+
 export function useOKRs() {
   const [okrs, setOkrs] = useState<OKRRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,7 +52,14 @@ export function useOKRs() {
       if (krErr) { toast.error('Erro ao salvar Key Results'); throw krErr }
     }
     toast.success('OKR criado com sucesso!')
-    await fetch()
+    await Promise.all([
+      fetch(),
+      notify(
+        'Novo OKR criado',
+        `"${form.objective}" foi adicionado para ${form.quarter} (${form.owner}).`,
+        'success'
+      ),
+    ])
   }
 
   async function updateOKR(id: string, form: OKRFormData) {
@@ -66,15 +77,28 @@ export function useOKRs() {
       if (krErr) { toast.error('Erro ao salvar Key Results'); throw krErr }
     }
     toast.success('OKR atualizado!')
-    await fetch()
+    await Promise.all([
+      fetch(),
+      notify(
+        'OKR atualizado',
+        `"${form.objective}" foi atualizado — progresso: ${form.progress}%.`,
+        'info'
+      ),
+    ])
   }
 
   async function deleteOKR(id: string) {
+    const okr = okrs.find(o => o.id === id)
     // key_results deleted by cascade
     const { error } = await supabase.from('okrs').delete().eq('id', id)
     if (error) { toast.error('Erro ao excluir OKR'); throw error }
     toast.success('OKR removido')
-    await fetch()
+    await Promise.all([
+      fetch(),
+      okr
+        ? notify('OKR removido', `"${okr.objective}" foi excluído.`, 'warning')
+        : Promise.resolve(),
+    ])
   }
 
   return { okrs, loading, error, createOKR, updateOKR, deleteOKR, refresh: fetch }

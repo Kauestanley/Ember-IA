@@ -175,8 +175,8 @@ export function Vendas() {
                 </div>
                 <span className="text-[12px] font-bold text-white">Ember IA</span>
               </div>
-              <span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background: `${RED}30`, color: RED }}>
-                Pro
+              <span className="rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}>
+                Interno
               </span>
             </div>
             <h3 className="text-[17px] font-black text-white leading-tight mb-2">Portfolio de IA Completo</h3>

@@ -46,6 +46,17 @@ export interface OKRRow {
   key_results: KeyResultRow[]
 }
 
+export type NotificationType = 'info' | 'success' | 'warning' | 'error'
+
+export interface NotificationRow {
+  id: string
+  title: string
+  message: string
+  type: NotificationType
+  read: boolean
+  created_at: string
+}
+
 export interface NewsPostRow {
   id: string
   author: string

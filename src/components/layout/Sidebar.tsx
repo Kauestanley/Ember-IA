@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Users, Target, Newspaper, TrendingUp, Zap, BarChart3, Settings, Bell, LogOut, Sparkles } from 'lucide-react'
+import { Users, Target, Newspaper, TrendingUp, Zap, BarChart3, Settings, Bell, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -148,22 +148,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </ul>
         </div>
       </nav>
-
-      {/* Upgrade CTA */}
-      <div className="px-2.5 pb-2">
-        <button
-          className="w-full rounded-xl px-3 py-2.5 text-left transition-opacity hover:opacity-90"
-          style={{ background: '#ef4444', boxShadow: '0 4px 20px rgba(239,68,68,0.3)' }}
-        >
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-white/90 shrink-0" />
-            <div>
-              <p className="text-[12px] font-bold text-white leading-tight">Ativar Plano Pro</p>
-              <p className="text-[10px] text-white/60 leading-tight">Desbloqueie todos os recursos</p>
-            </div>
-          </div>
-        </button>
-      </div>
 
       {/* User footer */}
       <div className="shrink-0 p-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
